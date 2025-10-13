@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2/promise');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -14,13 +13,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// قاعدة البيانات
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-};
+// تخزين البيانات في الذاكرة (مؤقت)
+let products = [
+    {
+        id: 1,
+        name: "طرح كلاسيكي أسود",
+        price: 149.99,
+        originalPrice: 199.99,
+        category: "طرح كلاسيكي",
+        colors: ["أسود"],
+        image: "https://via.placeholder.com/400x300?text=طرح+أسود",
+        created_at: new Date()
+    }
+];
+
+let orders = [];
+let nextProductId = 2;
+let nextOrderId = 1;
+
+// JWT Secret (استخدم متغير بيئة أو قيمة افتراضية)
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
 
 // Middleware للتحقق من التوكن
 const authenticateToken = (req, res, next) => {
@@ -31,7 +43,7 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ error: 'الوصول مرفوض' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'توكن غير صالح' });
         }
@@ -47,22 +59,17 @@ app.post('/api/admin/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        // تحقق من بيانات المسؤول (يمكن تغييرها)
+        // تحقق من بيانات المسؤول
         const adminUsername = 'admin';
-        const adminPassword = '$2a$10$8K1p/a0dRTlR0.2Q2Q2Q2e'; // كلمة مرور: admin123
+        const adminPassword = 'admin123'; // في الواقع، لازم تشفرها
         
-        if (username !== adminUsername) {
-            return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
-        }
-        
-        const isValid = await bcrypt.compare(password, adminPassword);
-        if (!isValid) {
+        if (username !== adminUsername || password !== adminPassword) {
             return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
         }
         
         const token = jwt.sign(
             { username: adminUsername, role: 'admin' },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '24h' }
         );
         
@@ -80,46 +87,23 @@ app.post('/api/admin/login', async (req, res) => {
 // 📦 مسارات المنتجات
 
 // جلب جميع المنتجات (للجميع)
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', (req, res) => {
     try {
-        const connection = await mysql.createConnection(dbConfig);
-        const [results] = await connection.execute(
-            'SELECT * FROM products ORDER BY created_at DESC'
-        );
-        
-        await connection.end();
-        
-        const products = results.map(product => ({
-            ...product,
-            colors: JSON.parse(product.colors || '[]')
-        }));
-        
         res.json(products);
-        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 // جلب منتج بواسطة ID
-app.get('/api/products/:id', async (req, res) => {
+app.get('/api/products/:id', (req, res) => {
     try {
-        const connection = await mysql.createConnection(dbConfig);
-        const [results] = await connection.execute(
-            'SELECT * FROM products WHERE id = ?',
-            [req.params.id]
-        );
+        const productId = parseInt(req.params.id);
+        const product = products.find(p => p.id === productId);
         
-        await connection.end();
-        
-        if (results.length === 0) {
+        if (!product) {
             return res.status(404).json({ error: 'المنتج غير موجود' });
         }
-        
-        const product = {
-            ...results[0],
-            colors: JSON.parse(results[0].colors || '[]')
-        };
         
         res.json(product);
         
@@ -129,22 +113,26 @@ app.get('/api/products/:id', async (req, res) => {
 });
 
 // إضافة منتج جديد (للمسؤول فقط)
-app.post('/api/products', authenticateToken, async (req, res) => {
+app.post('/api/products', authenticateToken, (req, res) => {
     try {
         const { name, price, originalPrice, category, colors, image } = req.body;
         
-        const connection = await mysql.createConnection(dbConfig);
-        const [result] = await connection.execute(
-            `INSERT INTO products (name, price, original_price, category, colors, image_url) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [name, price, originalPrice, category, JSON.stringify(colors), image]
-        );
+        const newProduct = {
+            id: nextProductId++,
+            name,
+            price: parseFloat(price),
+            originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+            category,
+            colors: colors || [],
+            image: image || 'https://via.placeholder.com/400x300?text=صورة+المنتج',
+            created_at: new Date()
+        };
         
-        await connection.end();
+        products.push(newProduct);
         
         res.json({ 
             message: 'تم إضافة المنتج بنجاح', 
-            productId: result.insertId 
+            product: newProduct 
         });
         
     } catch (error) {
@@ -153,22 +141,28 @@ app.post('/api/products', authenticateToken, async (req, res) => {
 });
 
 // تحديث منتج (للمسؤول فقط)
-app.put('/api/products/:id', authenticateToken, async (req, res) => {
+app.put('/api/products/:id', authenticateToken, (req, res) => {
     try {
-        const productId = req.params.id;
+        const productId = parseInt(req.params.id);
         const { name, price, originalPrice, category, colors, image } = req.body;
         
-        const connection = await mysql.createConnection(dbConfig);
-        await connection.execute(
-            `UPDATE products 
-             SET name = ?, price = ?, original_price = ?, category = ?, colors = ?, image_url = ?
-             WHERE id = ?`,
-            [name, price, originalPrice, category, JSON.stringify(colors), image, productId]
-        );
+        const productIndex = products.findIndex(p => p.id === productId);
         
-        await connection.end();
+        if (productIndex === -1) {
+            return res.status(404).json({ error: 'المنتج غير موجود' });
+        }
         
-        res.json({ message: 'تم تحديث المنتج بنجاح' });
+        products[productIndex] = {
+            ...products[productIndex],
+            name,
+            price: parseFloat(price),
+            originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+            category,
+            colors: colors || [],
+            image: image || products[productIndex].image
+        };
+        
+        res.json({ message: 'تم تحديث المنتج بنجاح', product: products[productIndex] });
         
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -176,17 +170,16 @@ app.put('/api/products/:id', authenticateToken, async (req, res) => {
 });
 
 // حذف منتج (للمسؤول فقط)
-app.delete('/api/products/:id', authenticateToken, async (req, res) => {
+app.delete('/api/products/:id', authenticateToken, (req, res) => {
     try {
-        const productId = req.params.id;
+        const productId = parseInt(req.params.id);
+        const productIndex = products.findIndex(p => p.id === productId);
         
-        const connection = await mysql.createConnection(dbConfig);
-        await connection.execute(
-            'DELETE FROM products WHERE id = ?',
-            [productId]
-        );
+        if (productIndex === -1) {
+            return res.status(404).json({ error: 'المنتج غير موجود' });
+        }
         
-        await connection.end();
+        products.splice(productIndex, 1);
         
         res.json({ message: 'تم حذف المنتج بنجاح' });
         
@@ -198,22 +191,25 @@ app.delete('/api/products/:id', authenticateToken, async (req, res) => {
 // 🛒 مسارات الطلبات
 
 // إضافة طلب جديد
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', (req, res) => {
     try {
-        const { customerName, customerPhone, products, totalAmount } = req.body;
+        const { customerName, customerPhone, products: orderProducts, totalAmount } = req.body;
         
-        const connection = await mysql.createConnection(dbConfig);
-        const [result] = await connection.execute(
-            `INSERT INTO orders (customer_name, customer_phone, products, total_amount, status) 
-             VALUES (?, ?, ?, ?, 'pending')`,
-            [customerName, customerPhone, JSON.stringify(products), totalAmount]
-        );
+        const newOrder = {
+            id: nextOrderId++,
+            customerName,
+            customerPhone,
+            products: orderProducts,
+            totalAmount: parseFloat(totalAmount),
+            status: 'pending',
+            created_at: new Date()
+        };
         
-        await connection.end();
+        orders.push(newOrder);
         
         res.json({ 
             message: 'تم إضافة الطلب بنجاح', 
-            orderId: result.insertId 
+            order: newOrder 
         });
         
     } catch (error) {
@@ -222,41 +218,29 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // جلب جميع الطلبات (للمسؤول فقط)
-app.get('/api/orders', authenticateToken, async (req, res) => {
+app.get('/api/orders', authenticateToken, (req, res) => {
     try {
-        const connection = await mysql.createConnection(dbConfig);
-        const [results] = await connection.execute(
-            'SELECT * FROM orders ORDER BY created_at DESC'
-        );
-        
-        await connection.end();
-        
-        const orders = results.map(order => ({
-            ...order,
-            products: JSON.parse(order.products || '[]')
-        }));
-        
         res.json(orders);
-        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 // تحديث حالة الطلب
-app.put('/api/orders/:id/status', authenticateToken, async (req, res) => {
+app.put('/api/orders/:id/status', authenticateToken, (req, res) => {
     try {
+        const orderId = parseInt(req.params.id);
         const { status } = req.body;
         
-        const connection = await mysql.createConnection(dbConfig);
-        await connection.execute(
-            'UPDATE orders SET status = ? WHERE id = ?',
-            [status, req.params.id]
-        );
+        const orderIndex = orders.findIndex(o => o.id === orderId);
         
-        await connection.end();
+        if (orderIndex === -1) {
+            return res.status(404).json({ error: 'الطلب غير موجود' });
+        }
         
-        res.json({ message: 'تم تحديث حالة الطلب بنجاح' });
+        orders[orderIndex].status = status;
+        
+        res.json({ message: 'تم تحديث حالة الطلب بنجاح', order: orders[orderIndex] });
         
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -264,28 +248,18 @@ app.put('/api/orders/:id/status', authenticateToken, async (req, res) => {
 });
 
 // 📊 إحصائيات (للمسؤول فقط)
-app.get('/api/stats', authenticateToken, async (req, res) => {
+app.get('/api/stats', authenticateToken, (req, res) => {
     try {
-        const connection = await mysql.createConnection(dbConfig);
-        
-        const [[productCount]] = await connection.execute(
-            'SELECT COUNT(*) as count FROM products'
-        );
-        
-        const [[orderCount]] = await connection.execute(
-            'SELECT COUNT(*) as count FROM orders'
-        );
-        
-        const [[totalRevenue]] = await connection.execute(
-            'SELECT SUM(total_amount) as total FROM orders WHERE status = "delivered"'
-        );
-        
-        await connection.end();
+        const productCount = products.length;
+        const orderCount = orders.length;
+        const totalRevenue = orders
+            .filter(order => order.status === 'delivered')
+            .reduce((sum, order) => sum + order.totalAmount, 0);
         
         res.json({
-            products: productCount.count,
-            orders: orderCount.count,
-            revenue: totalRevenue.total || 0
+            products: productCount,
+            orders: orderCount,
+            revenue: totalRevenue
         });
         
     } catch (error) {
