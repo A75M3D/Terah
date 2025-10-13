@@ -1,22 +1,15 @@
 {
   "name": "tarhi-store",
   "version": "1.0.0",
-  "description": "متجر طرح إلكتروني",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "engines": {
     "node": "22.x"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2"
-  },
-  "keywords": ["store", "ecommerce", "tarhi"],
-  "author": "Your Name",
-  "license": "MIT"
+    "cors": "^2.8.5"
+  }
 }
