@@ -1224,7 +1224,7 @@
 
     <script>
         // API configuration
-        const API_BASE_URL = 'http://localhost:3000'; // Change this to your server URL
+        const API_BASE_URL = window.location.origin; // استخدام نفس ال origin تلقائياً
         
         // نظام الدخول
         const loginScreen = document.getElementById('loginScreen');
@@ -1443,7 +1443,7 @@
             const original = originalPrice.value ? parseFloat(originalPrice.value) : null;
             const category = productCategory.value;
             const colors = getSelectedColors();
-            const image = productImage.value || 'https://dl.dropbox.com/scl/fi/urjzwaswjbwhxjbgckziw/b6f70c9159b90c61f3a8c3b5326c60e5.jpg?rlkey=sqh39xbecc24t7w45jtc3a6l0&st=s0flfpim&dl=1';
+            const image = productImage.value || 'https://via.placeholder.com/400x300?text=صورة+المنتج';
             
             // Create product object
             const product = {
