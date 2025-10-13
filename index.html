@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>طرحـي - متجر الطرح الأنيق</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #8b5cf6;
@@ -966,6 +965,27 @@
             font-size: 1.2rem;
             margin-bottom: 30px;
         }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--glass-bg);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="light-theme">
@@ -1016,7 +1036,7 @@
             <div class="hero-content">
                 <h1>اكتشف أحدث تشكيلات الطرح</h1>
                 <p>جودة عالية وتصاميم أنيقة تناسب كل المناسبات مع خدمة التوصيل لجميع أنحاء المملكة</p>
-                <button class="btn btn-primary">تسوق الآن</button>
+                <button class="btn btn-primary" id="shopNowBtn">تسوق الآن</button>
             </div>
         </div>
     </section>
@@ -1026,12 +1046,16 @@
         <h2 class="section-title">منتجاتنا المميزة</h2>
         
         <div class="filters">
-            <button class="filter-btn active">الكل</button>
-            <button class="filter-btn">طرح كلاسيكي</button>
-            <button class="filter-btn">طرح مطرز</button>
-            <button class="filter-btn">طرح شيفون</button>
-            <button class="filter-btn">طرح صيفي</button>
-            <button class="filter-btn">عروض خاصة</button>
+            <button class="filter-btn active" data-category="all">الكل</button>
+            <button class="filter-btn" data-category="طرح كلاسيكي">طرح كلاسيكي</button>
+            <button class="filter-btn" data-category="طرح مطرز">طرح مطرز</button>
+            <button class="filter-btn" data-category="طرح شيفون">طرح شيفون</button>
+            <button class="filter-btn" data-category="طرح صيفي">طرح صيفي</button>
+            <button class="filter-btn" data-category="عروض خاصة">عروض خاصة</button>
+        </div>
+        
+        <div class="loading" id="productsLoading">
+            <div class="loading-spinner"></div>
         </div>
         
         <div class="products-grid" id="productsGrid">
@@ -1133,11 +1157,12 @@
     </footer>
 
     <script>
-        // المنتجات سيتم تحميلها من localStorage المشترك
-        let products = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
+        // API configuration
+        const API_BASE_URL = 'http://localhost:3000'; // Change this to your server URL
         
         // Cart state
         let cart = [];
+        let products = [];
         
         // DOM Elements
         const themeToggle = document.getElementById('themeToggle');
@@ -1152,6 +1177,9 @@
         const whatsappOrder = document.getElementById('whatsappOrder');
         const productsGrid = document.getElementById('productsGrid');
         const emptyState = document.getElementById('emptyState');
+        const productsLoading = document.getElementById('productsLoading');
+        const shopNowBtn = document.getElementById('shopNowBtn');
+        const filterButtons = document.querySelectorAll('.filter-btn');
 
         // Theme Management
         themeToggle.addEventListener('click', () => {
@@ -1162,11 +1190,22 @@
             if (document.body.classList.contains('dark-theme')) {
                 icon.classList.remove('fa-moon');
                 icon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
             } else {
                 icon.classList.remove('fa-sun');
                 icon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
             }
         });
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.body.classList.remove('light-theme');
+            themeToggle.querySelector('i').classList.remove('fa-moon');
+            themeToggle.querySelector('i').classList.add('fa-sun');
+        }
         
         // Cart Management
         cartButton.addEventListener('click', () => {
@@ -1199,6 +1238,7 @@
             }
             
             updateCartUI();
+            saveCartToLocalStorage();
             
             // Show confirmation animation
             const button = event.target.closest('.add-to-cart');
@@ -1284,6 +1324,7 @@
             if (item) {
                 item.quantity += 1;
                 updateCartUI();
+                saveCartToLocalStorage();
             }
         }
         
@@ -1297,12 +1338,28 @@
                     return;
                 }
                 updateCartUI();
+                saveCartToLocalStorage();
             }
         }
         
         function removeFromCart(id) {
             cart = cart.filter(item => item.id !== id);
             updateCartUI();
+            saveCartToLocalStorage();
+        }
+        
+        // Save cart to localStorage
+        function saveCartToLocalStorage() {
+            localStorage.setItem('tarhiCart', JSON.stringify(cart));
+        }
+        
+        // Load cart from localStorage
+        function loadCartFromLocalStorage() {
+            const savedCart = localStorage.getItem('tarhiCart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+                updateCartUI();
+            }
         }
         
         // WhatsApp order function
@@ -1328,64 +1385,144 @@
             window.open(url, '_blank');
         });
         
-        // Load products
-        function loadProducts() {
+        // Load products from server
+        async function loadProducts(category = 'all') {
+            productsLoading.style.display = 'flex';
             productsGrid.innerHTML = '';
-            
-            // تحميل المنتجات من localStorage المشترك
-            const sharedProducts = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
-            
-            if (sharedProducts.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
-            
             emptyState.style.display = 'none';
             
-            sharedProducts.forEach((product, index) => {
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card';
-                productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
+            try {
+                // Try to fetch from server first
+                const response = await fetch(`${API_BASE_URL}/api/products`);
                 
-                productCard.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}" class="product-image">
-                    <div class="product-content">
-                        <div class="product-category">${product.category}</div>
-                        <h3 class="product-title">${product.name}</h3>
-                        
-                        <div class="product-colors">
-                            ${product.colors.map(color => 
-                                `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
-                            ).join('')}
-                        </div>
-                        
-                        <div class="product-price">
-                            <span class="current-price">${product.price} ر.س</span>
-                            ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
-                        </div>
-                        
-                        <div class="product-actions">
-                            <button class="add-to-cart" data-id="${product.id}">
-                                <i class="fas fa-shopping-cart"></i>
-                                أضف إلى السلة
-                            </button>
-                            <button class="action-btn"><i class="far fa-heart"></i></button>
-                            <button class="action-btn"><i class="far fa-eye"></i></button>
-                        </div>
-                    </div>
-                `;
+                if (response.ok) {
+                    products = await response.json();
+                } else {
+                    // Fallback to localStorage if server is not available
+                    console.log('Server not available, using localStorage');
+                    products = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
+                }
                 
-                productsGrid.appendChild(productCard);
-            });
-            
-            // Add event listeners to add to cart buttons
-            document.querySelectorAll('.add-to-cart').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(btn.getAttribute('data-id'));
-                    const product = sharedProducts.find(p => p.id === id);
-                    addToCart(product);
-                });
-            });
+                // Filter products by category if needed
+                let filteredProducts = products;
+                if (category !== 'all') {
+                    filteredProducts = products.filter(product => product.category === category);
+                }
+                
+                if (filteredProducts.length === 0) {
+                    emptyState.style.display = 'block';
+                    productsGrid.innerHTML = '';
+                } else {
+                    emptyState.style.display = 'none';
+                    
+                    filteredProducts.forEach((product, index) => {
+                        const productCard = document.createElement('div');
+                        productCard.className = 'product-card';
+                        productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
+                        
+                        productCard.innerHTML = `
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                            <div class="product-content">
+                                <div class="product-category">${product.category}</div>
+                                <h3 class="product-title">${product.name}</h3>
+                                
+                                <div class="product-colors">
+                                    ${product.colors ? product.colors.map(color => 
+                                        `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
+                                    ).join('') : ''}
+                                </div>
+                                
+                                <div class="product-price">
+                                    <span class="current-price">${product.price} ر.س</span>
+                                    ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
+                                </div>
+                                
+                                <div class="product-actions">
+                                    <button class="add-to-cart" data-id="${product.id}">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        أضف إلى السلة
+                                    </button>
+                                    <button class="action-btn"><i class="far fa-heart"></i></button>
+                                    <button class="action-btn"><i class="far fa-eye"></i></button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        productsGrid.appendChild(productCard);
+                    });
+                    
+                    // Add event listeners to add to cart buttons
+                    document.querySelectorAll('.add-to-cart').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const id = parseInt(btn.getAttribute('data-id'));
+                            const product = products.find(p => p.id === id);
+                            addToCart(product);
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                // Fallback to localStorage
+                products = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
+                
+                if (products.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                    // Render products from localStorage
+                    let filteredProducts = products;
+                    if (category !== 'all') {
+                        filteredProducts = products.filter(product => product.category === category);
+                    }
+                    
+                    filteredProducts.forEach((product, index) => {
+                        const productCard = document.createElement('div');
+                        productCard.className = 'product-card';
+                        productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
+                        
+                        productCard.innerHTML = `
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                            <div class="product-content">
+                                <div class="product-category">${product.category}</div>
+                                <h3 class="product-title">${product.name}</h3>
+                                
+                                <div class="product-colors">
+                                    ${product.colors ? product.colors.map(color => 
+                                        `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
+                                    ).join('') : ''}
+                                </div>
+                                
+                                <div class="product-price">
+                                    <span class="current-price">${product.price} ر.س</span>
+                                    ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
+                                </div>
+                                
+                                <div class="product-actions">
+                                    <button class="add-to-cart" data-id="${product.id}">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        أضف إلى السلة
+                                    </button>
+                                    <button class="action-btn"><i class="far fa-heart"></i></button>
+                                    <button class="action-btn"><i class="far fa-eye"></i></button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        productsGrid.appendChild(productCard);
+                    });
+                    
+                    // Add event listeners to add to cart buttons
+                    document.querySelectorAll('.add-to-cart').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const id = parseInt(btn.getAttribute('data-id'));
+                            const product = products.find(p => p.id === id);
+                            addToCart(product);
+                        });
+                    });
+                }
+            } finally {
+                productsLoading.style.display = 'none';
+            }
         }
         
         // Helper function to convert color names to hex
@@ -1412,10 +1549,31 @@
             return colorMap[colorName] || '#CCCCCC';
         }
         
+        // Filter products by category
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                filterButtons.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                // Get the category from data attribute
+                const category = this.getAttribute('data-category');
+                // Load products for this category
+                loadProducts(category);
+            });
+        });
+        
+        // Shop now button scroll to products
+        shopNowBtn.addEventListener('click', () => {
+            document.querySelector('.products-grid').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        });
+        
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
             loadProducts();
-            updateCartUI();
+            loadCartFromLocalStorage();
         });
     </script>
 </body>
