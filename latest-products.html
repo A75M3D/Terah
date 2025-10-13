@@ -901,6 +901,51 @@
                 font-size: 26px;
             }
         }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--glass-bg);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            z-index: 10000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--error);
+        }
     </style>
 </head>
 <body class="light-theme">
@@ -931,6 +976,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
 
     <!-- محتوى الإدارة (مخفي في البداية) -->
     <div id="adminContent" class="hidden">
@@ -970,7 +1018,7 @@
         <main class="container">
             <div class="page-header">
                 <h1 class="page-title">إدارة المنتجات</h1>
-                <p class="page-description">أضف منتجات جديدة بسهولة إلى متجرك، سيتم حفظها تلقائياً ومشاركتها مع جميع الزوار</p>
+                <p class="page-description">أضف منتجات جديدة بسهولة إلى متجرك، سيتم حفظها في قاعدة البيانات ومشاركتها مع جميع الزوار</p>
             </div>
 
             <!-- Admin Panel -->
@@ -1104,6 +1152,10 @@
             <div class="products-section">
                 <h2 class="section-title">المنتجات المضافة</h2>
                 
+                <div class="loading" id="productsLoading">
+                    <div class="loading-spinner"></div>
+                </div>
+                
                 <div class="products-grid" id="productsGrid">
                     <!-- Products will be loaded here -->
                 </div>
@@ -1171,6 +1223,9 @@
     </div>
 
     <script>
+        // API configuration
+        const API_BASE_URL = 'http://localhost:3000'; // Change this to your server URL
+        
         // نظام الدخول
         const loginScreen = document.getElementById('loginScreen');
         const adminContent = document.getElementById('adminContent');
@@ -1214,6 +1269,7 @@
         function showAdminContent() {
             loginScreen.style.display = 'none';
             adminContent.classList.remove('hidden');
+            loadProducts(); // تحميل المنتجات عند الدخول
         }
 
         function hideAdminContent() {
@@ -1232,6 +1288,8 @@
         const exportDataBtn = document.getElementById('exportData');
         const importDataBtn = document.getElementById('importData');
         const resetDataBtn = document.getElementById('resetData');
+        const productsLoading = document.getElementById('productsLoading');
+        const toast = document.getElementById('toast');
         
         // Preview elements
         const previewName = document.getElementById('previewName');
@@ -1249,8 +1307,8 @@
         const productImage = document.getElementById('productImage');
         const colorInputs = document.querySelectorAll('#colorInputs input[type="checkbox"]');
         
-        // Product data - سيتم مشاركتها مع جميع الزوار
-        let products = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
+        // Product data - سيتم تخزينها في قاعدة البيانات
+        let products = [];
         
         // Theme Management
         themeToggle.addEventListener('click', () => {
@@ -1261,11 +1319,38 @@
             if (document.body.classList.contains('dark-theme')) {
                 icon.classList.remove('fa-moon');
                 icon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
             } else {
                 icon.classList.remove('fa-sun');
                 icon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
             }
         });
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+            document.body.classList.remove('light-theme');
+            themeToggle.querySelector('i').classList.remove('fa-moon');
+            themeToggle.querySelector('i').classList.add('fa-sun');
+        }
+        
+        // Toast notification function
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            if (isError) {
+                toast.classList.add('error');
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
         
         // Update preview on form changes
         function updatePreview() {
@@ -1349,7 +1434,7 @@
         });
         
         // Handle form submission
-        productForm.addEventListener('submit', function(e) {
+        productForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Get form values
@@ -1362,7 +1447,6 @@
             
             // Create product object
             const product = {
-                id: Date.now(), // Simple ID generation
                 name,
                 price,
                 originalPrice: original,
@@ -1371,81 +1455,133 @@
                 image
             };
             
-            // Add to products array
-            products.push(product);
-            
-            // Save to localStorage - سيتم مشاركتها مع جميع الزوار
-            localStorage.setItem('tarhiSharedProducts', JSON.stringify(products));
-            
-            // Reload products list
-            loadProducts();
-            
-            // Reset form
-            productForm.reset();
-            updatePreview();
-            
-            // Show success message
-            alert('تم إضافة المنتج بنجاح! سيظهر لجميع زوار الموقع');
+            try {
+                // Send POST request to server
+                const response = await fetch(`${API_BASE_URL}/api/products`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(product)
+                });
+                
+                if (response.ok) {
+                    const newProduct = await response.json();
+                    
+                    // Add to products array
+                    products.push(newProduct);
+                    
+                    // Reload products list
+                    loadProducts();
+                    
+                    // Reset form
+                    productForm.reset();
+                    updatePreview();
+                    
+                    // Show success message
+                    showToast('تم إضافة المنتج بنجاح! سيظهر لجميع زوار الموقع');
+                } else {
+                    throw new Error('فشل في إضافة المنتج');
+                }
+            } catch (error) {
+                console.error('Error adding product:', error);
+                showToast('حدث خطأ في إضافة المنتج. يرجى المحاولة مرة أخرى.', true);
+            }
         });
         
-        // Load products from localStorage
-        function loadProducts() {
+        // Load products from server
+        async function loadProducts() {
+            productsLoading.style.display = 'flex';
             productsGrid.innerHTML = '';
-            
-            if (products.length === 0) {
-                emptyState.style.display = 'block';
-                return;
-            }
-            
             emptyState.style.display = 'none';
             
-            products.forEach(product => {
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card';
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/products`);
                 
-                productCard.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}" class="product-image">
-                    <div class="product-content">
-                        <div class="product-category">${product.category}</div>
-                        <h3 class="product-title">${product.name}</h3>
+                if (response.ok) {
+                    products = await response.json();
+                    
+                    if (products.length === 0) {
+                        emptyState.style.display = 'block';
+                        productsGrid.innerHTML = '';
+                    } else {
+                        emptyState.style.display = 'none';
                         
-                        <div class="product-colors">
-                            ${product.colors.map(color => 
-                                `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
-                            ).join('')}
-                        </div>
+                        products.forEach(product => {
+                            const productCard = document.createElement('div');
+                            productCard.className = 'product-card';
+                            
+                            productCard.innerHTML = `
+                                <img src="${product.image}" alt="${product.name}" class="product-image">
+                                <div class="product-content">
+                                    <div class="product-category">${product.category}</div>
+                                    <h3 class="product-title">${product.name}</h3>
+                                    
+                                    <div class="product-colors">
+                                        ${product.colors ? product.colors.map(color => 
+                                            `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
+                                        ).join('') : ''}
+                                    </div>
+                                    
+                                    <div class="product-price">
+                                        <span class="current-price">${product.price} ر.س</span>
+                                        ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
+                                    </div>
+                                    
+                                    <div class="product-actions">
+                                        <button class="action-btn delete-btn" data-id="${product.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            productsGrid.appendChild(productCard);
+                        });
                         
-                        <div class="product-price">
-                            <span class="current-price">${product.price} ر.س</span>
-                            ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
-                        </div>
-                        
-                        <div class="product-actions">
-                            <button class="action-btn delete-btn" data-id="${product.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                productsGrid.appendChild(productCard);
-            });
-            
-            // Add event listeners to delete buttons
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = parseInt(btn.getAttribute('data-id'));
-                    deleteProduct(id);
-                });
-            });
+                        // Add event listeners to delete buttons
+                        document.querySelectorAll('.delete-btn').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const id = parseInt(btn.getAttribute('data-id'));
+                                deleteProduct(id);
+                            });
+                        });
+                    }
+                } else {
+                    throw new Error('فشل في تحميل المنتجات');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showToast('حدث خطأ في تحميل المنتجات. يرجى المحاولة مرة أخرى.', true);
+                emptyState.style.display = 'block';
+            } finally {
+                productsLoading.style.display = 'none';
+            }
         }
         
         // Delete product
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if (confirm('هل أنت متأكد من حذف هذا المنتج؟ سيتم حذفه لجميع الزوار')) {
-                products = products.filter(product => product.id !== id);
-                localStorage.setItem('tarhiSharedProducts', JSON.stringify(products));
-                loadProducts();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        // Remove from products array
+                        products = products.filter(product => product.id !== id);
+                        
+                        // Reload products list
+                        loadProducts();
+                        
+                        showToast('تم حذف المنتج بنجاح');
+                    } else {
+                        throw new Error('فشل في حذف المنتج');
+                    }
+                } catch (error) {
+                    console.error('Error deleting product:', error);
+                    showToast('حدث خطأ في حذف المنتج. يرجى المحاولة مرة أخرى.', true);
+                }
             }
         }
         
@@ -1458,6 +1594,8 @@
             link.href = URL.createObjectURL(dataBlob);
             link.download = 'tarhi-products-backup.json';
             link.click();
+            
+            showToast('تم تصدير البيانات بنجاح');
         });
         
         // Import data
@@ -1466,24 +1604,52 @@
             input.type = 'file';
             input.accept = '.json';
             
-            input.onchange = e => {
+            input.onchange = async e => {
                 const file = e.target.files[0];
                 const reader = new FileReader();
                 
-                reader.onload = event => {
+                reader.onload = async event => {
                     try {
                         const importedProducts = JSON.parse(event.target.result);
                         
                         if (Array.isArray(importedProducts)) {
-                            products = importedProducts;
-                            localStorage.setItem('tarhiSharedProducts', JSON.stringify(products));
+                            let successCount = 0;
+                            let errorCount = 0;
+                            
+                            // Import each product
+                            for (const product of importedProducts) {
+                                try {
+                                    const response = await fetch(`${API_BASE_URL}/api/products`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(product)
+                                    });
+                                    
+                                    if (response.ok) {
+                                        successCount++;
+                                    } else {
+                                        errorCount++;
+                                    }
+                                } catch (error) {
+                                    errorCount++;
+                                }
+                            }
+                            
+                            // Reload products
                             loadProducts();
-                            alert('تم استيراد البيانات بنجاح!');
+                            
+                            if (errorCount === 0) {
+                                showToast(`تم استيراد ${successCount} منتج بنجاح!`);
+                            } else {
+                                showToast(`تم استيراد ${successCount} منتج، وفشل استيراد ${errorCount} منتج`, true);
+                            }
                         } else {
-                            alert('ملف غير صالح. يرجى اختيار ملف JSON صحيح.');
+                            showToast('ملف غير صالح. يرجى اختيار ملف JSON صحيح.', true);
                         }
                     } catch (error) {
-                        alert('خطأ في قراءة الملف. يرجى التأكد من صحة formato الملف.');
+                        showToast('خطأ في قراءة الملف. يرجى التأكد من صحة formato الملف.', true);
                     }
                 };
                 
@@ -1494,19 +1660,47 @@
         });
         
         // Reset data
-        resetDataBtn.addEventListener('click', () => {
+        resetDataBtn.addEventListener('click', async () => {
             if (confirm('هل أنت متأكد من مسح جميع المنتجات؟ هذا الإجراء لا يمكن التراجع عنه!')) {
-                products = [];
-                localStorage.setItem('tarhiSharedProducts', JSON.stringify(products));
-                loadProducts();
-                alert('تم مسح جميع المنتجات بنجاح');
+                try {
+                    // Delete all products one by one
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const product of products) {
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/api/products/${product.id}`, {
+                                method: 'DELETE'
+                            });
+                            
+                            if (response.ok) {
+                                successCount++;
+                            } else {
+                                errorCount++;
+                            }
+                        } catch (error) {
+                            errorCount++;
+                        }
+                    }
+                    
+                    // Reload products
+                    loadProducts();
+                    
+                    if (errorCount === 0) {
+                        showToast(`تم مسح ${successCount} منتج بنجاح`);
+                    } else {
+                        showToast(`تم مسح ${successCount} منتج، وفشل مسح ${errorCount} منتج`, true);
+                    }
+                } catch (error) {
+                    console.error('Error resetting data:', error);
+                    showToast('حدث خطأ في مسح البيانات. يرجى المحاولة مرة أخرى.', true);
+                }
             }
         });
         
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
             updatePreview();
-            loadProducts();
         });
     </script>
 </body>
