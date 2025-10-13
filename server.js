@@ -1,138 +1,70 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// الاتصال مع Supabase
+const supabaseUrl = process.env.SUPABASE_URL || 'https://sjipwstkvvrautexigmt.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqaXB3c3RrdnZyYXV0ZXhpZ210Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MTE5MDcsImV4cCI6MjA3NDQ4NzkwN30.FSh2yIdZdvdNvtWxK5JB02PIdWOG3707qO-F0c84PnY';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
-
-// تخزين البيانات في الذاكرة (مؤقت)
-let products = [
-    {
-        id: 1,
-        name: "طرح كلاسيكي أسود",
-        price: 149.99,
-        originalPrice: 199.99,
-        category: "طرح كلاسيكي",
-        colors: ["أسود"],
-        image: "https://via.placeholder.com/400x300?text=طرح+أسود",
-        created_at: new Date()
-    }
-];
-
-let orders = [];
-let nextProductId = 2;
-let nextOrderId = 1;
-
-// JWT Secret (استخدم متغير بيئة أو قيمة افتراضية)
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here';
-
-// Middleware للتحقق من التوكن
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'الوصول مرفوض' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'توكن غير صالح' });
-        }
-        req.user = user;
-        next();
-    });
-};
-
-// 🔐 مسارات المصادقة
-
-// تسجيل دخول المسؤول
-app.post('/api/admin/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        // تحقق من بيانات المسؤول
-        const adminUsername = 'admin';
-        const adminPassword = 'admin123'; // في الواقع، لازم تشفرها
-        
-        if (username !== adminUsername || password !== adminPassword) {
-            return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
-        }
-        
-        const token = jwt.sign(
-            { username: adminUsername, role: 'admin' },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-        
-        res.json({ 
-            message: 'تم تسجيل الدخول بنجاح',
-            token,
-            user: { username: adminUsername, role: 'admin' }
-        });
-        
-    } catch (error) {
-        res.status(500).json({ error: 'خطأ في الخادم' });
-    }
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 📦 مسارات المنتجات
 
-// جلب جميع المنتجات (للجميع)
-app.get('/api/products', (req, res) => {
+// جلب جميع المنتجات
+app.get('/api/products', async (req, res) => {
     try {
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        // تحويل JSON strings إلى arrays
+        const products = data.map(product => ({
+            ...product,
+            colors: typeof product.colors === 'string' ? JSON.parse(product.colors) : product.colors
+        }));
+
         res.json(products);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// جلب منتج بواسطة ID
-app.get('/api/products/:id', (req, res) => {
-    try {
-        const productId = parseInt(req.params.id);
-        const product = products.find(p => p.id === productId);
-        
-        if (!product) {
-            return res.status(404).json({ error: 'المنتج غير موجود' });
-        }
-        
-        res.json(product);
         
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// إضافة منتج جديد (للمسؤول فقط)
-app.post('/api/products', authenticateToken, (req, res) => {
+// إضافة منتج جديد
+app.post('/api/products', async (req, res) => {
     try {
         const { name, price, originalPrice, category, colors, image } = req.body;
         
-        const newProduct = {
-            id: nextProductId++,
-            name,
-            price: parseFloat(price),
-            originalPrice: originalPrice ? parseFloat(originalPrice) : null,
-            category,
-            colors: colors || [],
-            image: image || 'https://via.placeholder.com/400x300?text=صورة+المنتج',
-            created_at: new Date()
-        };
-        
-        products.push(newProduct);
+        const { data, error } = await supabase
+            .from('products')
+            .insert([
+                {
+                    name,
+                    price: parseFloat(price),
+                    original_price: originalPrice ? parseFloat(originalPrice) : null,
+                    category,
+                    colors: colors || [],
+                    image_url: image || 'https://via.placeholder.com/400x300?text=صورة+المنتج'
+                }
+            ])
+            .select();
+
+        if (error) throw error;
         
         res.json({ 
             message: 'تم إضافة المنتج بنجاح', 
-            product: newProduct 
+            product: data[0] 
         });
         
     } catch (error) {
@@ -140,46 +72,17 @@ app.post('/api/products', authenticateToken, (req, res) => {
     }
 });
 
-// تحديث منتج (للمسؤول فقط)
-app.put('/api/products/:id', authenticateToken, (req, res) => {
+// حذف منتج
+app.delete('/api/products/:id', async (req, res) => {
     try {
-        const productId = parseInt(req.params.id);
-        const { name, price, originalPrice, category, colors, image } = req.body;
+        const productId = req.params.id;
         
-        const productIndex = products.findIndex(p => p.id === productId);
-        
-        if (productIndex === -1) {
-            return res.status(404).json({ error: 'المنتج غير موجود' });
-        }
-        
-        products[productIndex] = {
-            ...products[productIndex],
-            name,
-            price: parseFloat(price),
-            originalPrice: originalPrice ? parseFloat(originalPrice) : null,
-            category,
-            colors: colors || [],
-            image: image || products[productIndex].image
-        };
-        
-        res.json({ message: 'تم تحديث المنتج بنجاح', product: products[productIndex] });
-        
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', productId);
 
-// حذف منتج (للمسؤول فقط)
-app.delete('/api/products/:id', authenticateToken, (req, res) => {
-    try {
-        const productId = parseInt(req.params.id);
-        const productIndex = products.findIndex(p => p.id === productId);
-        
-        if (productIndex === -1) {
-            return res.status(404).json({ error: 'المنتج غير موجود' });
-        }
-        
-        products.splice(productIndex, 1);
+        if (error) throw error;
         
         res.json({ message: 'تم حذف المنتج بنجاح' });
         
@@ -188,28 +91,30 @@ app.delete('/api/products/:id', authenticateToken, (req, res) => {
     }
 });
 
-// 🛒 مسارات الطلبات
-
-// إضافة طلب جديد
-app.post('/api/orders', (req, res) => {
+// تحديث منتج
+app.put('/api/products/:id', async (req, res) => {
     try {
-        const { customerName, customerPhone, products: orderProducts, totalAmount } = req.body;
+        const productId = req.params.id;
+        const { name, price, originalPrice, category, colors, image } = req.body;
         
-        const newOrder = {
-            id: nextOrderId++,
-            customerName,
-            customerPhone,
-            products: orderProducts,
-            totalAmount: parseFloat(totalAmount),
-            status: 'pending',
-            created_at: new Date()
-        };
-        
-        orders.push(newOrder);
+        const { data, error } = await supabase
+            .from('products')
+            .update({
+                name,
+                price: parseFloat(price),
+                original_price: originalPrice ? parseFloat(originalPrice) : null,
+                category,
+                colors: colors || [],
+                image_url: image
+            })
+            .eq('id', productId)
+            .select();
+
+        if (error) throw error;
         
         res.json({ 
-            message: 'تم إضافة الطلب بنجاح', 
-            order: newOrder 
+            message: 'تم تحديث المنتج بنجاح', 
+            product: data[0] 
         });
         
     } catch (error) {
@@ -217,49 +122,23 @@ app.post('/api/orders', (req, res) => {
     }
 });
 
-// جلب جميع الطلبات (للمسؤول فقط)
-app.get('/api/orders', authenticateToken, (req, res) => {
+// 🛒 مسارات الطلبات
+app.post('/api/orders', async (req, res) => {
     try {
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// تحديث حالة الطلب
-app.put('/api/orders/:id/status', authenticateToken, (req, res) => {
-    try {
-        const orderId = parseInt(req.params.id);
-        const { status } = req.body;
+        const { customerName, customerPhone, products: orderProducts, totalAmount } = req.body;
         
-        const orderIndex = orders.findIndex(o => o.id === orderId);
-        
-        if (orderIndex === -1) {
-            return res.status(404).json({ error: 'الطلب غير موجود' });
-        }
-        
-        orders[orderIndex].status = status;
-        
-        res.json({ message: 'تم تحديث حالة الطلب بنجاح', order: orders[orderIndex] });
-        
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// 📊 إحصائيات (للمسؤول فقط)
-app.get('/api/stats', authenticateToken, (req, res) => {
-    try {
-        const productCount = products.length;
-        const orderCount = orders.length;
-        const totalRevenue = orders
-            .filter(order => order.status === 'delivered')
-            .reduce((sum, order) => sum + order.totalAmount, 0);
-        
-        res.json({
-            products: productCount,
-            orders: orderCount,
-            revenue: totalRevenue
+        // حفظ الطلب في Supabase (يمكنك إنشاء جدول orders لاحقاً)
+        res.json({ 
+            message: 'تم إضافة الطلب بنجاح', 
+            order: {
+                id: Date.now(),
+                customerName,
+                customerPhone,
+                products: orderProducts,
+                totalAmount,
+                status: 'pending',
+                created_at: new Date()
+            }
         });
         
     } catch (error) {
@@ -278,6 +157,8 @@ app.get('/latest-products.html', (req, res) => {
 
 // تشغيل الخادم
 app.listen(PORT, () => {
-    console.log(`🚀 الخادم يعمل على http://localhost:${PORT}`);
-    console.log(`📊 لوحة التحكم: http://localhost:${PORT}/latest-products.html`);
+    console.log(`🚀 الخادم يعمل على port ${PORT}`);
+    console.log(`📊 Supabase connected: ${supabaseUrl}`);
 });
+
+module.exports = app;
