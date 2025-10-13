@@ -966,6 +966,7 @@
             margin-bottom: 30px;
         }
 
+        /* Loading States */
         .loading {
             display: flex;
             justify-content: center;
@@ -985,6 +986,29 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            z-index: 10000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--error);
         }
     </style>
 </head>
@@ -1103,6 +1127,9 @@
     <!-- Overlay -->
     <div class="overlay" id="overlay"></div>
 
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
     <!-- Footer -->
     <footer>
         <div class="container">
@@ -1158,7 +1185,7 @@
 
     <script>
         // API configuration
-        const API_BASE_URL = 'http://localhost:3000'; // Change this to your server URL
+        const API_BASE_URL = window.location.origin; // استخدام نفس ال origin تلقائياً
         
         // Cart state
         let cart = [];
@@ -1180,6 +1207,7 @@
         const productsLoading = document.getElementById('productsLoading');
         const shopNowBtn = document.getElementById('shopNowBtn');
         const filterButtons = document.querySelectorAll('.filter-btn');
+        const toast = document.getElementById('toast');
 
         // Theme Management
         themeToggle.addEventListener('click', () => {
@@ -1205,6 +1233,22 @@
             document.body.classList.remove('light-theme');
             themeToggle.querySelector('i').classList.remove('fa-moon');
             themeToggle.querySelector('i').classList.add('fa-sun');
+        }
+        
+        // Toast notification function
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.className = 'toast';
+            
+            if (isError) {
+                toast.classList.add('error');
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
         
         // Cart Management
@@ -1365,7 +1409,7 @@
         // WhatsApp order function
         whatsappOrder.addEventListener('click', () => {
             if (cart.length === 0) {
-                alert('سلة التسوق فارغة');
+                showToast('سلة التسوق فارغة', true);
                 return;
             }
             
@@ -1392,134 +1436,77 @@
             emptyState.style.display = 'none';
             
             try {
-                // Try to fetch from server first
                 const response = await fetch(`${API_BASE_URL}/api/products`);
                 
                 if (response.ok) {
                     products = await response.json();
-                } else {
-                    // Fallback to localStorage if server is not available
-                    console.log('Server not available, using localStorage');
-                    products = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
-                }
-                
-                // Filter products by category if needed
-                let filteredProducts = products;
-                if (category !== 'all') {
-                    filteredProducts = products.filter(product => product.category === category);
-                }
-                
-                if (filteredProducts.length === 0) {
-                    emptyState.style.display = 'block';
-                    productsGrid.innerHTML = '';
-                } else {
-                    emptyState.style.display = 'none';
                     
-                    filteredProducts.forEach((product, index) => {
-                        const productCard = document.createElement('div');
-                        productCard.className = 'product-card';
-                        productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
-                        
-                        productCard.innerHTML = `
-                            <img src="${product.image}" alt="${product.name}" class="product-image">
-                            <div class="product-content">
-                                <div class="product-category">${product.category}</div>
-                                <h3 class="product-title">${product.name}</h3>
-                                
-                                <div class="product-colors">
-                                    ${product.colors ? product.colors.map(color => 
-                                        `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
-                                    ).join('') : ''}
-                                </div>
-                                
-                                <div class="product-price">
-                                    <span class="current-price">${product.price} ر.س</span>
-                                    ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
-                                </div>
-                                
-                                <div class="product-actions">
-                                    <button class="add-to-cart" data-id="${product.id}">
-                                        <i class="fas fa-shopping-cart"></i>
-                                        أضف إلى السلة
-                                    </button>
-                                    <button class="action-btn"><i class="far fa-heart"></i></button>
-                                    <button class="action-btn"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                        `;
-                        
-                        productsGrid.appendChild(productCard);
-                    });
-                    
-                    // Add event listeners to add to cart buttons
-                    document.querySelectorAll('.add-to-cart').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = parseInt(btn.getAttribute('data-id'));
-                            const product = products.find(p => p.id === id);
-                            addToCart(product);
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading products:', error);
-                // Fallback to localStorage
-                products = JSON.parse(localStorage.getItem('tarhiSharedProducts')) || [];
-                
-                if (products.length === 0) {
-                    emptyState.style.display = 'block';
-                } else {
-                    emptyState.style.display = 'none';
-                    // Render products from localStorage
+                    // Filter products by category if needed
                     let filteredProducts = products;
                     if (category !== 'all') {
                         filteredProducts = products.filter(product => product.category === category);
                     }
                     
-                    filteredProducts.forEach((product, index) => {
-                        const productCard = document.createElement('div');
-                        productCard.className = 'product-card';
-                        productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
+                    if (filteredProducts.length === 0) {
+                        emptyState.style.display = 'block';
+                        productsGrid.innerHTML = '';
+                    } else {
+                        emptyState.style.display = 'none';
                         
-                        productCard.innerHTML = `
-                            <img src="${product.image}" alt="${product.name}" class="product-image">
-                            <div class="product-content">
-                                <div class="product-category">${product.category}</div>
-                                <h3 class="product-title">${product.name}</h3>
-                                
-                                <div class="product-colors">
-                                    ${product.colors ? product.colors.map(color => 
-                                        `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
-                                    ).join('') : ''}
+                        filteredProducts.forEach((product, index) => {
+                            const productCard = document.createElement('div');
+                            productCard.className = 'product-card';
+                            productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
+                            
+                            productCard.innerHTML = `
+                                <img src="${product.image}" alt="${product.name}" class="product-image">
+                                <div class="product-content">
+                                    <div class="product-category">${product.category}</div>
+                                    <h3 class="product-title">${product.name}</h3>
+                                    
+                                    <div class="product-colors">
+                                        ${product.colors ? product.colors.map(color => 
+                                            `<div class="color-dot" style="background-color: ${getColorHex(color)}" title="${color}"></div>`
+                                        ).join('') : ''}
+                                    </div>
+                                    
+                                    <div class="product-price">
+                                        <span class="current-price">${product.price} ر.س</span>
+                                        ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
+                                    </div>
+                                    
+                                    <div class="product-actions">
+                                        <button class="add-to-cart" data-id="${product.id}">
+                                            <i class="fas fa-shopping-cart"></i>
+                                            أضف إلى السلة
+                                        </button>
+                                        <button class="action-btn"><i class="far fa-heart"></i></button>
+                                        <button class="action-btn"><i class="far fa-eye"></i></button>
+                                    </div>
                                 </div>
-                                
-                                <div class="product-price">
-                                    <span class="current-price">${product.price} ر.س</span>
-                                    ${product.originalPrice ? `<span class="original-price">${product.originalPrice} ر.س</span>` : ''}
-                                </div>
-                                
-                                <div class="product-actions">
-                                    <button class="add-to-cart" data-id="${product.id}">
-                                        <i class="fas fa-shopping-cart"></i>
-                                        أضف إلى السلة
-                                    </button>
-                                    <button class="action-btn"><i class="far fa-heart"></i></button>
-                                    <button class="action-btn"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                        `;
-                        
-                        productsGrid.appendChild(productCard);
-                    });
-                    
-                    // Add event listeners to add to cart buttons
-                    document.querySelectorAll('.add-to-cart').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const id = parseInt(btn.getAttribute('data-id'));
-                            const product = products.find(p => p.id === id);
-                            addToCart(product);
+                            `;
+                            
+                            productsGrid.appendChild(productCard);
                         });
-                    });
+                        
+                        // Add event listeners to add to cart buttons
+                        document.querySelectorAll('.add-to-cart').forEach(btn => {
+                            btn.addEventListener('click', (e) => {
+                                const id = parseInt(btn.getAttribute('data-id'));
+                                const product = products.find(p => p.id === id);
+                                if (product) {
+                                    addToCart(product);
+                                }
+                            });
+                        });
+                    }
+                } else {
+                    throw new Error('فشل في تحميل المنتجات');
                 }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showToast('حدث خطأ في تحميل المنتجات', true);
+                emptyState.style.display = 'block';
             } finally {
                 productsLoading.style.display = 'none';
             }
