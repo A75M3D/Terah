@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>متجر المستقبل - تجربة تسوق ثورية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #00c6ff;
@@ -1885,6 +1886,13 @@
     </footer>
 
     <script>
+        // 🔧 إعدادات Supabase - غير هذه القيم بمعلومات مشروعك
+        const SUPABASE_URL = 'https://nvwabjwlzzelzkizblss.supabase.co'; // غير برابط مشروعك
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52d2FiandsenplbHpraXpibHNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDU1NDQsImV4cCI6MjA3NTkyMTU0NH0.AI9-rockiprdgbImyOoQCQ2p4wmI3MTJ6Fa-AX5_Nno'; // غير بالمفتاح العام لمشروعك
+
+        // تهيئة Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Cart state
         let cart = [];
         let products = [];
@@ -2160,130 +2168,153 @@
         });
         
         // Load 3D Carousel - إصلاح مشكلة var()
-        function loadCarousel() {
-            // بيانات تجريبية للعروض الخاصة
-            specialOffers = [
-                {
-                    id: 101,
-                    name: 'عرض خاص: هاتف ذكي بشاشة منحنية',
-                    category: 'عروض خاصة',
-                    price: 1699,
-                    original_price: 2199,
-                    discount: 23,
-                    image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
-                },
-                {
-                    id: 102,
-                    name: 'عرض خاص: سماعات لاسلكية متطورة',
-                    category: 'عروض خاصة',
-                    price: 249,
-                    original_price: 399,
-                    discount: 38,
-                    image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
-                },
-                {
-                    id: 103,
-                    name: 'عرض خاص: ساعة ذكية رياضية',
-                    category: 'عروض خاصة',
-                    price: 399,
-                    original_price: 550,
-                    discount: 27,
-                    image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
-                },
-                {
-                    id: 104,
-                    name: 'عرض خاص: نظارة واقع افتراضي',
-                    category: 'عروض خاصة',
-                    price: 699,
-                    original_price: 999,
-                    discount: 30,
-                    image_url: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
-                },
-                {
-                    id: 105,
-                    name: 'عرض خاص: روبوت تنظيف ذكي',
-                    category: 'عروض خاصة',
-                    price: 999,
-                    original_price: 1500,
-                    discount: 33,
-                    image_url: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
-                },
-                {
-                    id: 106,
-                    name: 'عرض خاص: حذاء رياضي بتقنية النانو',
-                    category: 'عروض خاصة',
-                    price: 299,
-                    original_price: 450,
-                    discount: 34,
-                    image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+        async function loadCarousel() {
+            try {
+                let offers = [];
+                
+                // إذا لم يتم إعداد Supabase، استخدم بيانات تجريبية
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+                    offers = [
+                        {
+                            id: 101,
+                            name: 'عرض خاص: هاتف ذكي بشاشة منحنية',
+                            category: 'عروض خاصة',
+                            price: 1699,
+                            original_price: 2199,
+                            discount: 23,
+                            image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+                        },
+                        {
+                            id: 102,
+                            name: 'عرض خاص: سماعات لاسلكية متطورة',
+                            category: 'عروض خاصة',
+                            price: 249,
+                            original_price: 399,
+                            discount: 38,
+                            image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+                        },
+                        {
+                            id: 103,
+                            name: 'عرض خاص: ساعة ذكية رياضية',
+                            category: 'عروض خاصة',
+                            price: 399,
+                            original_price: 550,
+                            discount: 27,
+                            image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+                        },
+                        {
+                            id: 104,
+                            name: 'عرض خاص: نظارة واقع افتراضي',
+                            category: 'عروض خاصة',
+                            price: 699,
+                            original_price: 999,
+                            discount: 30,
+                            image_url: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+                        },
+                        {
+                            id: 105,
+                            name: 'عرض خاص: روبوت تنظيف ذكي',
+                            category: 'عروض خاصة',
+                            price: 999,
+                            original_price: 1500,
+                            discount: 33,
+                            image_url: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+                        },
+                        {
+                            id: 106,
+                            name: 'عرض خاص: حذاء رياضي بتقنية النانو',
+                            category: 'عروض خاصة',
+                            price: 299,
+                            original_price: 450,
+                            discount: 34,
+                            image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+                        }
+                    ];
+                } else {
+                    // جلب العروض الخاصة من Supabase
+                    const { data, error } = await supabase
+                        .from('products')
+                        .select('*')
+                        .eq('category', 'عروض خاصة')
+                        .order('created_at', { ascending: false })
+                        .limit(6);
+
+                    if (error) throw error;
+                    
+                    offers = data || [];
                 }
-            ];
-            
-            carousel.innerHTML = '';
-            carouselIndicators.innerHTML = '';
-            
-            specialOffers.forEach((offer, index) => {
-                // إنشاء عنصر الكاروسيل
-                const carouselItem = document.createElement('div');
-                carouselItem.className = 'carousel-item';
-                if (index === 0) carouselItem.classList.add('active');
                 
-                carouselItem.innerHTML = `
-                    ${offer.discount ? `<div class="carousel-discount">-${offer.discount}%</div>` : ''}
-                    <img src="${offer.image_url}" alt="${offer.name}" class="carousel-image">
-                    <div class="carousel-content">
-                        <div class="carousel-category">${offer.category}</div>
-                        <h3 class="carousel-title">${offer.name}</h3>
-                        <div class="carousel-price">
-                            <span class="carousel-current-price">${offer.price} ر.س</span>
-                            ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ر.س</span>` : ''}
+                specialOffers = offers;
+                
+                carousel.innerHTML = '';
+                carouselIndicators.innerHTML = '';
+                
+                specialOffers.forEach((offer, index) => {
+                    // إنشاء عنصر الكاروسيل
+                    const carouselItem = document.createElement('div');
+                    carouselItem.className = 'carousel-item';
+                    if (index === 0) carouselItem.classList.add('active');
+                    
+                    carouselItem.innerHTML = `
+                        ${offer.discount ? `<div class="carousel-discount">-${offer.discount}%</div>` : ''}
+                        <img src="${offer.image_url || offer.image}" alt="${offer.name}" class="carousel-image">
+                        <div class="carousel-content">
+                            <div class="carousel-category">${offer.category}</div>
+                            <h3 class="carousel-title">${offer.name}</h3>
+                            <div class="carousel-price">
+                                <span class="carousel-current-price">${offer.price} ر.س</span>
+                                ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ر.س</span>` : ''}
+                            </div>
+                            <div class="carousel-actions">
+                                <button class="carousel-add-to-cart" data-id="${offer.id}">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    أضف إلى السلة
+                                </button>
+                                <button class="carousel-action-btn"><i class="far fa-heart"></i></button>
+                                <button class="carousel-action-btn"><i class="far fa-eye"></i></button>
+                            </div>
                         </div>
-                        <div class="carousel-actions">
-                            <button class="carousel-add-to-cart" data-id="${offer.id}">
-                                <i class="fas fa-shopping-cart"></i>
-                                أضف إلى السلة
-                            </button>
-                            <button class="carousel-action-btn"><i class="far fa-heart"></i></button>
-                            <button class="carousel-action-btn"><i class="far fa-eye"></i></button>
-                        </div>
-                    </div>
-                `;
-                
-                carousel.appendChild(carouselItem);
-                
-                // إنشاء المؤشرات
-                const indicator = document.createElement('div');
-                indicator.className = 'carousel-indicator';
-                if (index === 0) indicator.classList.add('active');
-                indicator.setAttribute('data-index', index);
-                indicator.addEventListener('click', () => {
-                    rotateCarousel(index);
+                    `;
+                    
+                    carousel.appendChild(carouselItem);
+                    
+                    // إنشاء المؤشرات
+                    const indicator = document.createElement('div');
+                    indicator.className = 'carousel-indicator';
+                    if (index === 0) indicator.classList.add('active');
+                    indicator.setAttribute('data-index', index);
+                    indicator.addEventListener('click', () => {
+                        rotateCarousel(index);
+                    });
+                    carouselIndicators.appendChild(indicator);
                 });
-                carouselIndicators.appendChild(indicator);
-            });
-            
-            // تحديث مواضيع العناصر في الكاروسيل
-            updateCarouselItems();
-            
-            // إضافة مستمعي الأحداث لأزرار التنقل
-            prevBtn.addEventListener('click', () => {
-                rotateCarousel(currentCarouselIndex - 1);
-            });
-            
-            nextBtn.addEventListener('click', () => {
-                rotateCarousel(currentCarouselIndex + 1);
-            });
-            
-            // إضافة مستمعي الأحداث لأزرار إضافة إلى السلة
-            document.querySelectorAll('.carousel-add-to-cart').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(btn.getAttribute('data-id'));
-                    const product = specialOffers.find(p => p.id === id);
-                    if (product) {
-                        addToCart(product);
-                    }
+                
+                // تحديث مواضيع العناصر في الكاروسيل
+                updateCarouselItems();
+                
+                // إضافة مستمعي الأحداث لأزرار التنقل
+                prevBtn.addEventListener('click', () => {
+                    rotateCarousel(currentCarouselIndex - 1);
                 });
-            });
+                
+                nextBtn.addEventListener('click', () => {
+                    rotateCarousel(currentCarouselIndex + 1);
+                });
+                
+                // إضافة مستمعي الأحداث لأزرار إضافة إلى السلة
+                document.querySelectorAll('.carousel-add-to-cart').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = parseInt(btn.getAttribute('data-id'));
+                        const product = specialOffers.find(p => p.id === id);
+                        if (product) {
+                            addToCart(product);
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading carousel:', error);
+                showToast('حدث خطأ في تحميل العروض الخاصة', true);
+            }
         }
         
         // تدوير الكاروسيل - إصلاح مشكلة var()
@@ -2339,74 +2370,93 @@
             });
         }
         
-        // Load products
+        // Load products from Supabase
         async function loadProducts(category = 'all') {
             productsLoading.style.display = 'flex';
             productsGrid.innerHTML = '';
             emptyState.style.display = 'none';
             
             try {
-                // بيانات تجريبية
-                products = [
-                    {
-                        id: 1,
-                        name: 'سماعات لاسلكية متطورة',
-                        category: 'إلكترونيات',
-                        price: 299,
-                        original_price: 399,
-                        image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                        colors: ['أسود', 'أبيض', 'أزرق']
-                    },
-                    {
-                        id: 2,
-                        name: 'ساعة ذكية رياضية',
-                        category: 'إلكترونيات',
-                        price: 450,
-                        original_price: 550,
-                        image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                        colors: ['أسود', 'فضي', 'ذهبي']
-                    },
-                    {
-                        id: 3,
-                        name: 'هاتف ذكي بشاشة منحنية',
-                        category: 'إلكترونيات',
-                        price: 1899,
-                        original_price: 2199,
-                        image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                        colors: ['أسود', 'أزرق', 'أخضر']
-                    },
-                    {
-                        id: 4,
-                        name: 'حذاء رياضي بتقنية النانو',
-                        category: 'رياضة',
-                        price: 350,
-                        original_price: 450,
-                        image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                        colors: ['أسود', 'أبيض', 'أحمر']
-                    },
-                    {
-                        id: 5,
-                        name: 'نظارة واقع افتراضي',
-                        category: 'إلكترونيات',
-                        price: 799,
-                        original_price: 999,
-                        image_url: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                        colors: ['أسود', 'رمادي']
-                    },
-                    {
-                        id: 6,
-                        name: 'روبوت تنظيف ذكي',
-                        category: 'أجهزة منزلية',
-                        price: 1200,
-                        original_price: 1500,
-                        image_url: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                        colors: ['أبيض', 'أسود']
+                // إذا لم يتم إعداد Supabase، استخدم بيانات تجريبية
+                if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+                    // بيانات تجريبية
+                    products = [
+                        {
+                            id: 1,
+                            name: 'سماعات لاسلكية متطورة',
+                            category: 'إلكترونيات',
+                            price: 299,
+                            original_price: 399,
+                            image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                            colors: ['أسود', 'أبيض', 'أزرق']
+                        },
+                        {
+                            id: 2,
+                            name: 'ساعة ذكية رياضية',
+                            category: 'إلكترونيات',
+                            price: 450,
+                            original_price: 550,
+                            image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                            colors: ['أسود', 'فضي', 'ذهبي']
+                        },
+                        {
+                            id: 3,
+                            name: 'هاتف ذكي بشاشة منحنية',
+                            category: 'إلكترونيات',
+                            price: 1899,
+                            original_price: 2199,
+                            image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                            colors: ['أسود', 'أزرق', 'أخضر']
+                        },
+                        {
+                            id: 4,
+                            name: 'حذاء رياضي بتقنية النانو',
+                            category: 'رياضة',
+                            price: 350,
+                            original_price: 450,
+                            image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                            colors: ['أسود', 'أبيض', 'أحمر']
+                        },
+                        {
+                            id: 5,
+                            name: 'نظارة واقع افتراضي',
+                            category: 'إلكترونيات',
+                            price: 799,
+                            original_price: 999,
+                            image_url: 'https://images.unsplash.com/photo-1593113630400-ea4288922497?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                            colors: ['أسود', 'رمادي']
+                        },
+                        {
+                            id: 6,
+                            name: 'روبوت تنظيف ذكي',
+                            category: 'أجهزة منزلية',
+                            price: 1200,
+                            original_price: 1500,
+                            image_url: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                            colors: ['أبيض', 'أسود']
+                        }
+                    ];
+                    
+                    // تصفية حسب الفئة إذا لزم الأمر
+                    if (category !== 'all') {
+                        products = products.filter(product => product.category === category);
                     }
-                ];
-                
-                // تصفية حسب الفئة إذا لزم الأمر
-                if (category !== 'all') {
-                    products = products.filter(product => product.category === category);
+                } else {
+                    let query = supabase
+                        .from('products')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    // Filter by category if needed
+                    if (category !== 'all') {
+                        query = query.eq('category', category);
+                    }
+
+                    const { data, error } = await query;
+
+                    if (error) throw error;
+                    
+                    products = data || [];
                 }
                 
                 if (products.length === 0) {
@@ -2421,7 +2471,7 @@
                         productCard.style.animationDelay = `${(index + 1) * 0.1}s`;
                         
                         productCard.innerHTML = `
-                            <img src="${product.image_url}" alt="${product.name}" class="product-image">
+                            <img src="${product.image_url || product.image}" alt="${product.name}" class="product-image">
                             <div class="product-content">
                                 <div class="product-category">${product.category}</div>
                                 <h3 class="product-title">${product.name}</h3>
