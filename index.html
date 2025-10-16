@@ -14,13 +14,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            background: #000000;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             z-index: 9999;
             transition: opacity 0.8s ease, visibility 0.8s ease;
+            overflow: hidden;
         }
 
         #loadingScreen.fade-out {
@@ -38,6 +39,7 @@
             position: relative;
             margin-bottom: 30px;
             animation: logoPulse 2s infinite alternate, textFlow 8s linear infinite;
+            z-index: 10;
         }
 
         @keyframes logoPulse {
@@ -84,6 +86,7 @@
             margin-bottom: 40px;
             text-align: center;
             animation: fadeInOut 2s infinite alternate;
+            z-index: 10;
         }
 
         @keyframes fadeInOut {
@@ -91,37 +94,65 @@
             100% { opacity: 1; }
         }
 
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top: 4px solid #00c6ff;
-            border-radius: 50%;
-            animation: spin 1.5s linear infinite;
-            box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-progress {
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
+        /* شريط التحميل على شكل مجرى مائي */
+        .loading-stream-container {
+            width: 300px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
             margin-top: 30px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid rgba(0, 198, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 198, 255, 0.2);
+            z-index: 10;
+        }
+
+        .loading-stream {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            border-radius: 20px;
+            transition: width 7s linear;
+            position: relative;
             overflow: hidden;
         }
 
-        .loading-progress-bar {
+        .loading-stream::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
-            width: 0%;
-            background: linear-gradient(to right, #00c6ff, #ff2d75);
-            border-radius: 2px;
-            transition: width 5s linear;
-            box-shadow: 0 0 10px rgba(0, 198, 255, 0.7);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: waterShine 2s infinite;
+        }
+
+        @keyframes waterShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stream-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+            z-index: 11;
+        }
+
+        /* Canvas للمطر */
+        #rainCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
 
         /* إخفاء المحتوى الرئيسي أثناء التحميل */
@@ -1803,11 +1834,12 @@
 <body class="dark-theme">
     <!-- شاشة التحميل -->
     <div id="loadingScreen">
+        <canvas id="rainCanvas"></canvas>
         <div class="loading-logo">متجر المستقبل</div>
         <div class="loading-subtitle">تجربة تسوق ثورية تنتظرك...</div>
-        <div class="loading-spinner"></div>
-        <div class="loading-progress">
-            <div class="loading-progress-bar" id="progressBar"></div>
+        <div class="loading-stream-container">
+            <div class="loading-stream" id="loadingStream"></div>
+            <div class="stream-label" id="streamLabel">0%</div>
         </div>
     </div>
 
@@ -1952,7 +1984,7 @@
             
             <div class="cart-total">
                 <span>المجموع:</span>
-                <span id="cartTotal">0 ر.س</span>
+                <span id="cartTotal">0 ج.س</span>
             </div>
             
             <div class="cart-actions">
@@ -1989,7 +2021,7 @@
                         <h3>روابط سريعة</h3>
                         <ul class="footer-links">
                             <li><a href="#">الرئيسية</a></li>
-                            <li><a href="latest-products.html">إدارة المنتجات</a></li>
+                            <li><a href="https://mostagb-al-store.vercel.app/ad.html">إدارة المنتجات</a></li>
                             <li><a href="#">عروض خاصة</a></li>
                             <li><a href="#">الجديد</a></li>
                             <li><a href="#">اتصل بنا</a></li>
@@ -2012,7 +2044,7 @@
                         <ul class="footer-links">
                             <li><i class="fas fa-phone" style="margin-left: 8px;"></i>+249 924 299 798</li>
                             <li><i class="fas fa-envelope" style="margin-left: 8px;"></i> info@futurestore.com</li>
-                            <li><i class="fas fa-map-marker-alt" style="margin-left: 8px;"></i> الرياض، المملكة العربية السعودية</li>
+                            <li><i class="fas fa-map-marker-alt" style="margin-left: 8px;"></i> الخرطوم ، السودان</li>
                         </ul>
                     </div>
                 </div>
@@ -2063,27 +2095,174 @@
 
         // شاشة التحميل
         const loadingScreen = document.getElementById('loadingScreen');
-        const progressBar = document.getElementById('progressBar');
+        const rainCanvas = document.getElementById('rainCanvas');
+        const loadingStream = document.getElementById('loadingStream');
+        const streamLabel = document.getElementById('streamLabel');
         const mainContent = document.querySelector('.main-content');
 
         // بدء شاشة التحميل
         function startLoadingScreen() {
-            // بدء شريط التقدم
-            progressBar.style.width = '100%';
+            // بدء انيميشن المطر والموجات
+            startRainAnimation();
             
-            // الانتقال بعد 5 ثواني
-            setTimeout(() => {
-                loadingScreen.classList.add('fade-out');
+            // بدء شريط التقدم
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 1;
+                loadingStream.style.width = `${progress}%`;
+                streamLabel.textContent = `${progress}%`;
                 
-                // إظهار المحتوى الرئيسي بعد انتهاء الانتقال
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    mainContent.classList.add('loaded');
+                if (progress >= 100) {
+                    clearInterval(interval);
                     
-                    // تهيئة الموقع بعد انتهاء التحميل
-                    initializeSite();
-                }, 800);
-            }, 5000);
+                    // الانتقال بعد اكتمال التحميل
+                    setTimeout(() => {
+                        loadingScreen.classList.add('fade-out');
+                        
+                        // إظهار المحتوى الرئيسي بعد انتهاء الانتقال
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                            mainContent.classList.add('loaded');
+                            
+                            // تهيئة الموقع بعد انتهاء التحميل
+                            initializeSite();
+                        }, 800);
+                    }, 500);
+                }
+            }, 70); // 7 ثواني بالكامل
+        }
+
+        // انيميشن المطر والموجات باستخدام أحدث تقنيات JavaScript
+        function startRainAnimation() {
+            const canvas = rainCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            // ضبط حجم الـ canvas
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // قطرات المطر
+            const drops = [];
+            const dropCount = 80; // عدد معقول لمطر خفيف
+            
+            // الموجات الدائرية
+            const waves = [];
+            
+            // إنشاء قطرات المطر
+            for (let i = 0; i < dropCount; i++) {
+                drops.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    length: Math.random() * 20 + 10,
+                    speed: Math.random() * 5 + 5,
+                    opacity: Math.random() * 0.5 + 0.3,
+                    size: Math.random() * 1.5 + 0.5
+                });
+            }
+            
+            // رسم المطر والموجات باستخدام requestAnimationFrame
+            function drawRain() {
+                // مسح الـ canvas بخلفية سوداء
+                ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // رسم كل قطرة باستخدام أحدث تقنيات Canvas
+                drops.forEach(drop => {
+                    // تحديث موضع القطرة
+                    drop.y += drop.speed;
+                    
+                    // إعادة تعيين القطرة إذا وصلت للأسفل وإنشاء موجة
+                    if (drop.y > canvas.height) {
+                        drop.y = -drop.length;
+                        drop.x = Math.random() * canvas.width;
+                        
+                        // إنشاء موجة دائرية جديدة عند سقوط القطرة
+                        waves.push({
+                            x: drop.x,
+                            y: canvas.height,
+                            radius: 0,
+                            maxRadius: Math.random() * 50 + 30,
+                            opacity: 0.7,
+                            speed: Math.random() * 2 + 1,
+                            lineWidth: Math.random() * 2 + 1
+                        });
+                    }
+                    
+                    // رسم القطرة باستخدام تدرج لوني
+                    const gradient = ctx.createLinearGradient(drop.x, drop.y, drop.x, drop.y + drop.length);
+                    gradient.addColorStop(0, `rgba(0, 198, 255, ${drop.opacity})`);
+                    gradient.addColorStop(1, `rgba(0, 120, 255, ${drop.opacity * 0.5})`);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(drop.x, drop.y);
+                    ctx.lineTo(drop.x, drop.y + drop.length);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = drop.size;
+                    ctx.stroke();
+                    
+                    // إضافة تأثير توهج للقطرة
+                    ctx.beginPath();
+                    ctx.moveTo(drop.x, drop.y);
+                    ctx.lineTo(drop.x, drop.y + drop.length);
+                    ctx.strokeStyle = `rgba(0, 198, 255, ${drop.opacity * 0.2})`;
+                    ctx.lineWidth = drop.size * 3;
+                    ctx.stroke();
+                });
+                
+                // رسم الموجات الدائرية باستخدام أحدث تقنيات Canvas
+                for (let i = waves.length - 1; i >= 0; i--) {
+                    const wave = waves[i];
+                    
+                    // تحديث نصف قطر الموجة
+                    wave.radius += wave.speed;
+                    wave.opacity -= 0.015;
+                    
+                    // إزالة الموجة إذا تلاشت
+                    if (wave.opacity <= 0 || wave.radius > wave.maxRadius) {
+                        waves.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // رسم الموجة الدائرية باستخدام تدرج لوني
+                    const gradient = ctx.createRadialGradient(
+                        wave.x, wave.y, 0,
+                        wave.x, wave.y, wave.radius
+                    );
+                    gradient.addColorStop(0, `rgba(0, 198, 255, ${wave.opacity})`);
+                    gradient.addColorStop(1, `rgba(0, 198, 255, 0)`);
+                    
+                    ctx.beginPath();
+                    ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = wave.lineWidth;
+                    ctx.stroke();
+                    
+                    // رسم موجة داخلية إضافية
+                    if (wave.radius > 10) {
+                        ctx.beginPath();
+                        ctx.arc(wave.x, wave.y, wave.radius - 8, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(0, 198, 255, ${wave.opacity * 0.7})`;
+                        ctx.lineWidth = wave.lineWidth * 0.7;
+                        ctx.stroke();
+                    }
+                }
+                
+                requestAnimationFrame(drawRain);
+            }
+            
+            // بدء الرسوم المتحركة
+            drawRain();
+            
+            // تحديث حجم الـ canvas عند تغيير حجم النافذة باستخدام ResizeObserver
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const { width, height } = entry.contentRect;
+                    canvas.width = width;
+                    canvas.height = height;
+                }
+            });
+            
+            resizeObserver.observe(canvas);
         }
 
         // Initialize the site after loading
@@ -2234,7 +2413,7 @@
                         <img src="${item.image_url || 'https://via.placeholder.com/80'}" alt="${item.name}" class="cart-item-image">
                         <div class="cart-item-details">
                             <div class="cart-item-name">${item.name}</div>
-                            <div class="cart-item-price">${item.price} ر.س</div>
+                            <div class="cart-item-price">${item.price} ج.س</div>
                             <div class="cart-item-actions">
                                 <button class="quantity-btn decrease" data-id="${item.id}">-</button>
                                 <span class="cart-item-quantity">${item.quantity}</span>
@@ -2273,7 +2452,7 @@
             
             // Update total
             const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            cartTotal.textContent = `${total.toFixed(2)} ر.س`;
+            cartTotal.textContent = `${total.toFixed(2)} ج.س`;
         }
         
         // Cart item functions
@@ -2331,13 +2510,13 @@
             let message = 'مرحباً، أريد طلب المنتجات التالية:\n\n';
             
             cart.forEach(item => {
-                message += `- ${item.name} (${item.quantity}) - ${item.price * item.quantity} ر.س\n`;
+                message += `- ${item.name} (${item.quantity}) - ${item.price * item.quantity} ج.س\n`;
             });
             
             const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            message += `\nالمجموع: ${total.toFixed(2)} ر.س`;
+            message += `\nالمجموع: ${total.toFixed(2)} ج.س`;
             
-            const phoneNumber = '966123456789';
+            const phoneNumber = '0924299798';
             const encodedMessage = encodeURIComponent(message);
             const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
             
@@ -2439,8 +2618,8 @@
                             <div class="carousel-category">${offer.category}</div>
                             <h3 class="carousel-title">${offer.name}</h3>
                             <div class="carousel-price">
-                                <span class="carousel-current-price">${offer.price} ر.س</span>
-                                ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ر.س</span>` : ''}
+                                <span class="carousel-current-price">${offer.price} ج.س</span>
+                                ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ج.س</span>` : ''}
                             </div>
                             <div class="carousel-actions">
                                 <button class="carousel-add-to-cart" data-id="${offer.id}">
@@ -2660,8 +2839,8 @@
                                 </div>
                                 
                                 <div class="product-price">
-                                    <span class="current-price">${product.price} ر.س</span>
-                                    ${product.original_price ? `<span class="original-price">${product.original_price} ر.س</span>` : ''}
+                                    <span class="current-price">${product.price} ج.س</span>
+                                    ${product.original_price ? `<span class="original-price">${product.original_price} ج.س</span>` : ''}
                                 </div>
                                 
                                 <div class="product-actions">
