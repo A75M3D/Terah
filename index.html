@@ -430,6 +430,13 @@
             border: 1px solid var(--primary-light);
         }
 
+        /* 3D Carousel Section - محسن للأداء */
+        .carousel-section {
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
         .section-title {
             text-align: center;
             font-size: 2.5rem;
@@ -438,13 +445,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             position: relative;
-        }
-
-        /* 3D Carousel Section - محسن للأداء */
-        .carousel-section {
-            padding: 80px 0;
-            position: relative;
-            overflow: hidden;
         }
 
         .carousel-container {
@@ -968,9 +968,6 @@
                 font-size: 1.1rem;
             }
         }
-
-        /* باقي الCSS كما هو... */
-
     </style>
 </head>
 <body class="dark-theme">
@@ -987,11 +984,6 @@
 
     <!-- المحتوى الرئيسي -->
     <div class="main-content">
-        <!-- سيارة التوصيل -->
-        <div class="delivery-car">
-            <i class="fas fa-truck"></i>
-        </div>
-
         <!-- Header -->
         <header>
             <div class="container">
@@ -1139,6 +1131,10 @@
         const cartButton = document.getElementById('cartButton');
         const cartCount = document.getElementById('cartCount');
         const shopNowBtn = document.getElementById('shopNowBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const carousel = document.getElementById('carousel');
+        const carouselIndicators = document.getElementById('carouselIndicators');
 
         // بدء التحميل
         function startLoading() {
@@ -1210,7 +1206,29 @@
                     rotateMobileCarousel(index);
                     restartMobileCarouselAutoPlay();
                 }
+                
+                if (e.target.classList.contains('carousel-indicator')) {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    clearInterval(carouselInterval);
+                    rotateCarousel(index);
+                    restartCarouselAutoPlay();
+                }
             });
+            
+            // إضافة مستمعي الأحداث للكاروسيل ثلاثي الأبعاد
+            if (prevBtn && nextBtn) {
+                prevBtn.addEventListener('click', () => {
+                    clearInterval(carouselInterval);
+                    rotateCarousel(currentCarouselIndex - 1);
+                    restartCarouselAutoPlay();
+                });
+                
+                nextBtn.addEventListener('click', () => {
+                    clearInterval(carouselInterval);
+                    rotateCarousel(currentCarouselIndex + 1);
+                    restartCarouselAutoPlay();
+                });
+            }
         }
 
         // التعامل مع تغيير حجم النافذة
@@ -1322,56 +1340,11 @@
                 
                 specialOffers = offers;
                 
-                // إعداد الكاروسيل المتنقل للهاتف - تصميم جديد
-                mobileCarousel.innerHTML = '';
-                mobileCarouselIndicators.innerHTML = '';
+                // إعداد الكاروسيل ثلاثي الأبعاد للديسكتوب
+                setup3DCarousel();
                 
-                specialOffers.forEach((offer, index) => {
-                    // إنشاء عنصر الكاروسيل للهاتف
-                    const mobileCarouselItem = document.createElement('div');
-                    mobileCarouselItem.className = 'mobile-carousel-item';
-                    
-                    mobileCarouselItem.innerHTML = `
-                        <div class="mobile-carousel-card">
-                            ${offer.discount ? `<div class="mobile-carousel-discount">-${offer.discount}%</div>` : ''}
-                            <img src="${offer.image_url}" alt="${offer.name}" class="mobile-carousel-image">
-                            <div class="mobile-carousel-content">
-                                <div class="carousel-category">${offer.category}</div>
-                                <h3 class="carousel-title">${offer.name}</h3>
-                                <div class="carousel-price">
-                                    <span class="carousel-current-price">${offer.price} ج.س</span>
-                                    ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ج.س</span>` : ''}
-                                </div>
-                                <div class="carousel-actions">
-                                    <button class="carousel-add-to-cart" data-id="${offer.id}">
-                                        <i class="fas fa-shopping-cart"></i>
-                                        أضف إلى السلة
-                                    </button>
-                                    <button class="carousel-action-btn"><i class="far fa-heart"></i></button>
-                                    <button class="carousel-action-btn"><i class="far fa-eye"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    mobileCarousel.appendChild(mobileCarouselItem);
-                    
-                    // إنشاء المؤشرات للهاتف
-                    const mobileIndicator = document.createElement('div');
-                    mobileIndicator.className = 'mobile-carousel-indicator';
-                    if (index === 0) mobileIndicator.classList.add('active');
-                    mobileIndicator.setAttribute('data-index', index);
-                    mobileCarouselIndicators.appendChild(mobileIndicator);
-                    
-                    // إضافة مستمع حدث لإضافة إلى السلة
-                    mobileCarouselItem.querySelector('.carousel-add-to-cart').addEventListener('click', (e) => {
-                        const id = parseInt(e.currentTarget.getAttribute('data-id'));
-                        const product = specialOffers.find(p => p.id === id);
-                        if (product) {
-                            addToCart(product, e.currentTarget);
-                        }
-                    });
-                });
+                // إعداد الكاروسيل المتنقل للهاتف
+                setupMobileCarousel();
                 
             } catch (error) {
                 console.error('Error loading carousel:', error);
@@ -1379,7 +1352,159 @@
             }
         }
 
-        // تدوير الكاروسيل للهاتف - تصميم جديد
+        // إعداد الكاروسيل ثلاثي الأبعاد للديسكتوب
+        function setup3DCarousel() {
+            carousel.innerHTML = '';
+            carouselIndicators.innerHTML = '';
+            
+            const totalItems = specialOffers.length;
+            const angleStep = (2 * Math.PI) / totalItems;
+            
+            specialOffers.forEach((offer, index) => {
+                // حساب الموضع في الدائرة
+                const angle = index * angleStep;
+                const x = Math.cos(angle) * 400; // نصف القطر
+                const z = Math.sin(angle) * 400;
+                const y = 0;
+                
+                // إنشاء عنصر الكاروسيل
+                const carouselItem = document.createElement('div');
+                carouselItem.className = 'carousel-item';
+                if (index === 0) carouselItem.classList.add('active');
+                
+                carouselItem.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateY(${angle}rad)`;
+                
+                carouselItem.innerHTML = `
+                    ${offer.discount ? `<div class="carousel-discount">-${offer.discount}%</div>` : ''}
+                    <img src="${offer.image_url}" alt="${offer.name}" class="carousel-image">
+                    <div class="carousel-content">
+                        <div class="carousel-category">${offer.category}</div>
+                        <h3 class="carousel-title">${offer.name}</h3>
+                        <div class="carousel-price">
+                            <span class="carousel-current-price">${offer.price} ج.س</span>
+                            ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ج.س</span>` : ''}
+                        </div>
+                        <div class="carousel-actions">
+                            <button class="carousel-add-to-cart" data-id="${offer.id}">
+                                <i class="fas fa-shopping-cart"></i>
+                                أضف إلى السلة
+                            </button>
+                            <button class="carousel-action-btn"><i class="far fa-heart"></i></button>
+                            <button class="carousel-action-btn"><i class="far fa-eye"></i></button>
+                        </div>
+                    </div>
+                `;
+                
+                carousel.appendChild(carouselItem);
+                
+                // إنشاء المؤشرات
+                const indicator = document.createElement('div');
+                indicator.className = 'carousel-indicator';
+                if (index === 0) indicator.classList.add('active');
+                indicator.setAttribute('data-index', index);
+                carouselIndicators.appendChild(indicator);
+                
+                // إضافة مستمع حدث لإضافة إلى السلة
+                carouselItem.querySelector('.carousel-add-to-cart').addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.getAttribute('data-id'));
+                    const product = specialOffers.find(p => p.id === id);
+                    if (product) {
+                        addToCart(product, e.currentTarget);
+                    }
+                });
+            });
+        }
+
+        // إعداد الكاروسيل المتنقل للهاتف
+        function setupMobileCarousel() {
+            mobileCarousel.innerHTML = '';
+            mobileCarouselIndicators.innerHTML = '';
+            
+            specialOffers.forEach((offer, index) => {
+                // إنشاء عنصر الكاروسيل للهاتف
+                const mobileCarouselItem = document.createElement('div');
+                mobileCarouselItem.className = 'mobile-carousel-item';
+                
+                mobileCarouselItem.innerHTML = `
+                    <div class="mobile-carousel-card">
+                        ${offer.discount ? `<div class="mobile-carousel-discount">-${offer.discount}%</div>` : ''}
+                        <img src="${offer.image_url}" alt="${offer.name}" class="mobile-carousel-image">
+                        <div class="mobile-carousel-content">
+                            <div class="carousel-category">${offer.category}</div>
+                            <h3 class="carousel-title">${offer.name}</h3>
+                            <div class="carousel-price">
+                                <span class="carousel-current-price">${offer.price} ج.س</span>
+                                ${offer.original_price ? `<span class="carousel-original-price">${offer.original_price} ج.س</span>` : ''}
+                            </div>
+                            <div class="carousel-actions">
+                                <button class="carousel-add-to-cart" data-id="${offer.id}">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    أضف إلى السلة
+                                </button>
+                                <button class="carousel-action-btn"><i class="far fa-heart"></i></button>
+                                <button class="carousel-action-btn"><i class="far fa-eye"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                mobileCarousel.appendChild(mobileCarouselItem);
+                
+                // إنشاء المؤشرات للهاتف
+                const mobileIndicator = document.createElement('div');
+                mobileIndicator.className = 'mobile-carousel-indicator';
+                if (index === 0) mobileIndicator.classList.add('active');
+                mobileIndicator.setAttribute('data-index', index);
+                mobileCarouselIndicators.appendChild(mobileIndicator);
+                
+                // إضافة مستمع حدث لإضافة إلى السلة
+                mobileCarouselItem.querySelector('.carousel-add-to-cart').addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.getAttribute('data-id'));
+                    const product = specialOffers.find(p => p.id === id);
+                    if (product) {
+                        addToCart(product, e.currentTarget);
+                    }
+                });
+            });
+        }
+
+        // تدوير الكاروسيل ثلاثي الأبعاد
+        function rotateCarousel(newIndex) {
+            if (window.innerWidth <= 768) return;
+            
+            const totalItems = specialOffers.length;
+            if (newIndex < 0) newIndex = totalItems - 1;
+            if (newIndex >= totalItems) newIndex = 0;
+            
+            currentCarouselIndex = newIndex;
+            
+            const angleStep = (2 * Math.PI) / totalItems;
+            const rotation = -currentCarouselIndex * angleStep;
+            
+            carousel.style.transform = `rotateY(${rotation}rad)`;
+            
+            // تحديث المؤشرات
+            const indicators = document.querySelectorAll('.carousel-indicator');
+            indicators.forEach((indicator, index) => {
+                if (index === currentCarouselIndex) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+            
+            // تحديث العناصر النشطة
+            const items = document.querySelectorAll('.carousel-item');
+            items.forEach((item, index) => {
+                if (index === currentCarouselIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // تدوير الكاروسيل للهاتف
         function rotateMobileCarousel(newIndex) {
             if (window.innerWidth > 768) return;
             
@@ -1419,8 +1544,7 @@
         function restartCarouselAutoPlay() {
             clearInterval(carouselInterval);
             carouselInterval = setInterval(() => {
-                // تدوير الكاروسيل للديسكتوب
-                // يمكنك إضافة الكود الخاص بالديسكتوب هنا إذا لزم الأمر
+                rotateCarousel(currentCarouselIndex + 1);
             }, 5000);
         }
 
