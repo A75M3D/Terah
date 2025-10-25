@@ -12,6 +12,7 @@
         * {
             font-family: 'Tajawal', sans-serif;
         }
+        
         .form-input {
             width: 100%;
             padding: 12px 16px;
@@ -19,17 +20,20 @@
             border-radius: 8px;
             transition: all 0.3s ease;
         }
+        
         .form-input:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             outline: none;
         }
+        
         .form-label {
             display: block;
             color: #374151;
             margin-bottom: 8px;
             font-weight: 500;
         }
+        
         .btn {
             padding: 12px 24px;
             border-radius: 8px;
@@ -39,50 +43,63 @@
             align-items: center;
             justify-content: center;
         }
+        
         .btn-primary {
             background-color: #3b82f6;
             color: white;
         }
+        
         .btn-primary:hover {
             background-color: #2563eb;
         }
+        
         .btn-secondary {
             background-color: #6b7280;
             color: white;
         }
+        
         .btn-secondary:hover {
             background-color: #4b5563;
         }
+        
         .btn-success {
             background-color: #10b981;
             color: white;
         }
+        
         .btn-success:hover {
             background-color: #059669;
         }
+        
         .btn-danger {
             background-color: #ef4444;
             color: white;
         }
+        
         .btn-danger:hover {
             background-color: #dc2626;
         }
+        
         .btn-warning {
             background-color: #f59e0b;
             color: white;
         }
+        
         .btn-warning:hover {
             background-color: #d97706;
         }
+        
         .table-container {
             overflow-x: auto;
             border-radius: 12px;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
         }
+        
         th {
             background-color: #f9fafb;
             padding: 16px 12px;
@@ -91,14 +108,17 @@
             color: #374151;
             border-bottom: 1px solid #e5e7eb;
         }
+        
         td {
             padding: 16px 12px;
             border-bottom: 1px solid #e5e7eb;
             color: #6b7280;
         }
+        
         tr:hover {
             background-color: #f9fafb;
         }
+        
         .modal {
             display: none;
             position: fixed;
@@ -111,6 +131,7 @@
             align-items: center;
             justify-content: center;
         }
+        
         .modal-content {
             background-color: white;
             border-radius: 12px;
@@ -120,6 +141,7 @@
             overflow-y: auto;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+        
         .modal-header {
             padding: 20px 24px;
             border-bottom: 1px solid #e5e7eb;
@@ -127,9 +149,11 @@
             justify-content: space-between;
             align-items: center;
         }
+        
         .modal-body {
             padding: 24px;
         }
+        
         .modal-footer {
             padding: 20px 24px;
             border-top: 1px solid #e5e7eb;
@@ -137,12 +161,14 @@
             justify-content: flex-start;
             gap: 12px;
         }
+        
         .property-image {
             width: 80px;
             height: 60px;
             object-fit: cover;
             border-radius: 6px;
         }
+        
         .badge {
             display: inline-block;
             padding: 4px 12px;
@@ -150,18 +176,22 @@
             font-size: 0.75rem;
             font-weight: 500;
         }
+        
         .badge-success {
             background-color: #d1fae5;
             color: #065f46;
         }
+        
         .badge-warning {
             background-color: #fef3c7;
             color: #92400e;
         }
+        
         .badge-danger {
             background-color: #fee2e2;
             color: #991b1b;
         }
+        
         .sidebar-link {
             display: flex;
             align-items: center;
@@ -169,27 +199,110 @@
             color: #6b7280;
             transition: all 0.3s ease;
         }
+        
         .sidebar-link:hover {
             background-color: #f3f4f6;
             color: #3b82f6;
         }
+        
         .sidebar-link.active {
             background-color: #eff6ff;
             color: #3b82f6;
             border-right: 3px solid #3b82f6;
         }
+        
         .tab-content {
             display: none;
         }
+        
         .tab-content.active {
             display: block;
         }
+        
         .stats-card {
             background: white;
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             border-left: 4px solid #3b82f6;
+        }
+        
+        /* تصميم مرن للأحياء */
+        .neighborhoods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .neighborhood-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .neighborhood-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .neighborhood-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 24px;
+        }
+        
+        /* تصميم حقل إدخال الأحياء المرن */
+        .neighborhood-input-container {
+            position: relative;
+        }
+        
+        .neighborhood-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .neighborhood-suggestion {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .neighborhood-suggestion:hover {
+            background-color: #f9fafb;
+        }
+        
+        .neighborhood-suggestion:last-child {
+            border-bottom: none;
+        }
+        
+        /* تصميم قسم إدارة الأحياء */
+        .manage-neighborhoods-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            margin-top: 24px;
         }
     </style>
 </head>
@@ -229,6 +342,10 @@
                     <a href="#" id="propertiesTab" class="sidebar-link" data-tab="properties">
                         <i class="fas fa-building ml-3"></i>
                         <span>إدارة العقارات</span>
+                    </a>
+                    <a href="#" id="neighborhoodsTab" class="sidebar-link" data-tab="neighborhoods">
+                        <i class="fas fa-map-marker-alt ml-3"></i>
+                        <span>إدارة الأحياء</span>
                     </a>
                 </nav>
             </div>
@@ -279,11 +396,11 @@
                         <div class="stats-card" style="border-left-color: #ef4444;">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="text-gray-500 text-sm">العقارات المتاحة</p>
-                                    <h3 class="text-2xl font-bold text-gray-800 mt-2" id="availableProperties">0</h3>
+                                    <p class="text-gray-500 text-sm">عدد الأحياء</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 mt-2" id="neighborhoodsCount">0</h3>
                                 </div>
                                 <div class="bg-red-100 p-3 rounded-lg">
-                                    <i class="fas fa-home text-red-500 text-xl"></i>
+                                    <i class="fas fa-map-marker-alt text-red-500 text-xl"></i>
                                 </div>
                             </div>
                         </div>
@@ -323,16 +440,12 @@
                                     <input type="text" id="propertyTitle" class="form-input" required>
                                 </div>
                                 
-                                <div>
+                                <div class="neighborhood-input-container">
                                     <label class="form-label">الحي *</label>
-                                    <select id="propertyArea" class="form-input" required>
-                                        <option value="">اختر الحي</option>
-                                        <option value="النخيل">حي النخيل</option>
-                                        <option value="الربيع">حي الربيع</option>
-                                        <option value="العليا">حي العليا</option>
-                                        <option value="السلام">حي السلام</option>
-                                        <option value="الفيصلية">حي الفيصلية</option>
-                                    </select>
+                                    <input type="text" id="propertyArea" class="form-input" placeholder="اكتب اسم الحي أو اختر من القائمة" required>
+                                    <div class="neighborhood-suggestions" id="neighborhoodSuggestions">
+                                        <!-- سيتم تعبئة الاقتراحات هنا -->
+                                    </div>
                                 </div>
                                 
                                 <div>
@@ -343,6 +456,8 @@
                                         <option value="فيلا">فيلا</option>
                                         <option value="استوديو">استوديو</option>
                                         <option value="منزل">منزل</option>
+                                        <option value="شقة دوبلكس">شقة دوبلكس</option>
+                                        <option value="بنتهاوس">بنتهاوس</option>
                                     </select>
                                 </div>
                                 
@@ -439,6 +554,42 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- قسم إدارة الأحياء -->
+                <div id="neighborhoods" class="tab-content">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">إدارة الأحياء</h2>
+                    
+                    <div class="manage-neighborhoods-section">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">إضافة حي جديد</h3>
+                        <form id="addNeighborhoodForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="form-label">اسم الحي *</label>
+                                <input type="text" id="neighborhoodName" class="form-input" placeholder="أدخل اسم الحي الجديد" required>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">لون الحي</label>
+                                <input type="color" id="neighborhoodColor" class="form-input h-12" value="#3b82f6">
+                            </div>
+                            
+                            <div class="flex items-end">
+                                <button type="submit" class="btn btn-primary w-full">
+                                    <i class="fas fa-plus ml-2"></i>
+                                    إضافة الحي
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="manage-neighborhoods-section">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">الأحياء المتاحة</h3>
+                        <p class="text-gray-600 mb-4">يمكنك إضافة أي عدد من الأحياء وإدارتها بسهولة</p>
+                        
+                        <div class="neighborhoods-grid" id="neighborhoodsGrid">
+                            <!-- سيتم تعبئة الأحياء هنا -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -461,16 +612,12 @@
                             <input type="text" id="editPropertyTitle" class="form-input" required>
                         </div>
                         
-                        <div>
+                        <div class="neighborhood-input-container">
                             <label class="form-label">الحي *</label>
-                            <select id="editPropertyArea" class="form-input" required>
-                                <option value="">اختر الحي</option>
-                                <option value="النخيل">حي النخيل</option>
-                                <option value="الربيع">حي الربيع</option>
-                                <option value="العليا">حي العليا</option>
-                                <option value="السلام">حي السلام</option>
-                                <option value="الفيصلية">حي الفيصلية</option>
-                            </select>
+                            <input type="text" id="editPropertyArea" class="form-input" placeholder="اكتب اسم الحي أو اختر من القائمة" required>
+                            <div class="neighborhood-suggestions" id="editNeighborhoodSuggestions">
+                                <!-- سيتم تعبئة الاقتراحات هنا -->
+                            </div>
                         </div>
                         
                         <div>
@@ -481,6 +628,8 @@
                                 <option value="فيلا">فيلا</option>
                                 <option value="استوديو">استوديو</option>
                                 <option value="منزل">منزل</option>
+                                <option value="شقة دوبلكس">شقة دوبلكس</option>
+                                <option value="بنتهاوس">بنتهاوس</option>
                             </select>
                         </div>
                         
@@ -548,6 +697,26 @@
         </div>
     </div>
 
+    <!-- Modal لحذف الحي -->
+    <div id="deleteNeighborhoodModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-lg font-bold text-gray-800">حذف الحي</h3>
+                <button id="closeDeleteNeighborhoodModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-gray-700">هل أنت متأكد من أنك تريد حذف هذا الحي؟</p>
+                <p class="text-gray-500 text-sm mt-2">سيتم حذف الحي من القائمة فقط، ولن يتم حذف العقارات المرتبطة به.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteNeighborhood" class="btn btn-secondary">إلغاء</button>
+                <button id="confirmDeleteNeighborhood" class="btn btn-danger">حذف الحي</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="fixed top-20 right-4 p-4 rounded-xl shadow-2xl z-50 max-w-sm hidden"></div>
 
@@ -558,12 +727,14 @@
         
         // تهيئة Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+
         // متغيرات عامة
         let currentPage = 1;
         const itemsPerPage = 10;
         let allProperties = [];
         let propertyToDelete = null;
+        let neighborhoodToDelete = null;
+        let neighborhoods = [];
 
         // تهيئة الصفحة
         document.addEventListener('DOMContentLoaded', function() {
@@ -586,12 +757,15 @@
                         loadProperties();
                     } else if (tabId === 'dashboard') {
                         loadDashboardData();
+                    } else if (tabId === 'neighborhoods') {
+                        loadNeighborhoods();
                     }
                 });
             });
             
             // تحميل بيانات لوحة التحكم عند البدء
             loadDashboardData();
+            loadNeighborhoods();
             
             // إعداد أحداث النماذج والنوافذ المنبثقة
             setupEventListeners();
@@ -605,6 +779,12 @@
                 await addProperty();
             });
             
+            // إضافة حي جديد
+            document.getElementById('addNeighborhoodForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await addNeighborhood();
+            });
+            
             // تحديث عقار
             document.getElementById('updateProperty').addEventListener('click', async function() {
                 await updateProperty();
@@ -615,11 +795,18 @@
                 await deleteProperty();
             });
             
+            // حذف حي
+            document.getElementById('confirmDeleteNeighborhood').addEventListener('click', async function() {
+                await deleteNeighborhood();
+            });
+            
             // إغلاق النوافذ المنبثقة
             document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
             document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
             document.getElementById('closeDeleteModal').addEventListener('click', closeDeleteModal);
             document.getElementById('cancelDelete').addEventListener('click', closeDeleteModal);
+            document.getElementById('closeDeleteNeighborhoodModal').addEventListener('click', closeDeleteNeighborhoodModal);
+            document.getElementById('cancelDeleteNeighborhood').addEventListener('click', closeDeleteNeighborhoodModal);
             
             // التنقل بين الصفحات
             document.getElementById('prevPage').addEventListener('click', function() {
@@ -641,6 +828,107 @@
             document.getElementById('searchInput').addEventListener('input', function() {
                 renderPropertiesTable();
             });
+            
+            // إعداد اقتراحات الأحياء
+            setupNeighborhoodSuggestions();
+        }
+
+        // إعداد اقتراحات الأحياء
+        function setupNeighborhoodSuggestions() {
+            const areaInput = document.getElementById('propertyArea');
+            const suggestionsContainer = document.getElementById('neighborhoodSuggestions');
+            
+            const editAreaInput = document.getElementById('editPropertyArea');
+            const editSuggestionsContainer = document.getElementById('editNeighborhoodSuggestions');
+            
+            // إظهار الاقتراحات عند التركيز على الحقل
+            areaInput.addEventListener('focus', function() {
+                updateNeighborhoodSuggestions(suggestionsContainer, this.value);
+                suggestionsContainer.style.display = 'block';
+            });
+            
+            editAreaInput.addEventListener('focus', function() {
+                updateNeighborhoodSuggestions(editSuggestionsContainer, this.value);
+                editSuggestionsContainer.style.display = 'block';
+            });
+            
+            // إخفاء الاقتراحات عند فقدان التركيز
+            areaInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                    suggestionsContainer.style.display = 'none';
+                }, 200);
+            });
+            
+            editAreaInput.addEventListener('blur', function() {
+                setTimeout(() => {
+                    editSuggestionsContainer.style.display = 'none';
+                }, 200);
+            });
+            
+            // تحديث الاقتراحات أثناء الكتابة
+            areaInput.addEventListener('input', function() {
+                updateNeighborhoodSuggestions(suggestionsContainer, this.value);
+            });
+            
+            editAreaInput.addEventListener('input', function() {
+                updateNeighborhoodSuggestions(editSuggestionsContainer, this.value);
+            });
+        }
+
+        // تحديث اقتراحات الأحياء
+        function updateNeighborhoodSuggestions(container, query) {
+            container.innerHTML = '';
+            
+            if (!query) {
+                // عرض جميع الأحياء إذا لم يكن هناك استعلام
+                neighborhoods.forEach(neighborhood => {
+                    const suggestion = document.createElement('div');
+                    suggestion.className = 'neighborhood-suggestion';
+                    suggestion.textContent = neighborhood.name;
+                    suggestion.addEventListener('click', function() {
+                        const input = container.id === 'neighborhoodSuggestions' 
+                            ? document.getElementById('propertyArea') 
+                            : document.getElementById('editPropertyArea');
+                        input.value = neighborhood.name;
+                        container.style.display = 'none';
+                    });
+                    container.appendChild(suggestion);
+                });
+            } else {
+                // تصفية الأحياء بناءً على الاستعلام
+                const filteredNeighborhoods = neighborhoods.filter(neighborhood => 
+                    neighborhood.name.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                if (filteredNeighborhoods.length > 0) {
+                    filteredNeighborhoods.forEach(neighborhood => {
+                        const suggestion = document.createElement('div');
+                        suggestion.className = 'neighborhood-suggestion';
+                        suggestion.textContent = neighborhood.name;
+                        suggestion.addEventListener('click', function() {
+                            const input = container.id === 'neighborhoodSuggestions' 
+                                ? document.getElementById('propertyArea') 
+                                : document.getElementById('editPropertyArea');
+                            input.value = neighborhood.name;
+                            container.style.display = 'none';
+                        });
+                        container.appendChild(suggestion);
+                    });
+                } else {
+                    const suggestion = document.createElement('div');
+                    suggestion.className = 'neighborhood-suggestion';
+                    suggestion.textContent = `إضافة "${query}" كحي جديد`;
+                    suggestion.style.color = '#3b82f6';
+                    suggestion.addEventListener('click', function() {
+                        const input = container.id === 'neighborhoodSuggestions' 
+                            ? document.getElementById('propertyArea') 
+                            : document.getElementById('editPropertyArea');
+                        input.value = query;
+                        container.style.display = 'none';
+                    });
+                    container.appendChild(suggestion);
+                }
+            }
         }
 
         // تحميل بيانات لوحة التحكم
@@ -671,8 +959,9 @@
                 });
                 document.getElementById('todayProperties').textContent = todayProperties.length;
                 
-                // العقارات المتاحة (يمكن إضافة منطق خاص بالحالة)
-                document.getElementById('availableProperties').textContent = data.length;
+                // عدد الأحياء
+                const uniqueNeighborhoods = new Set(data.map(p => p.area));
+                document.getElementById('neighborhoodsCount').textContent = uniqueNeighborhoods.size;
                 
                 // عرض آخر العقارات
                 displayRecentProperties(data.slice(0, 5));
@@ -864,12 +1153,169 @@
                     loadDashboardData();
                 }
                 
+                // إضافة الحي إلى قائمة الأحياء إذا كان جديدًا
+                await addNeighborhoodIfNew(propertyData.area);
+                
             } catch (error) {
                 console.error('Error adding property:', error);
                 showToast('حدث خطأ في إضافة العقار: ' + error.message, 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-plus-circle ml-2"></i> إضافة العقار';
+            }
+        }
+
+        // إضافة حي جديد إذا لم يكن موجودًا
+        async function addNeighborhoodIfNew(neighborhoodName) {
+            const exists = neighborhoods.some(n => n.name === neighborhoodName);
+            
+            if (!exists) {
+                const newNeighborhood = {
+                    name: neighborhoodName,
+                    color: getRandomColor(),
+                    created_at: new Date().toISOString()
+                };
+                
+                neighborhoods.push(newNeighborhood);
+                await saveNeighborhoods();
+                loadNeighborhoods();
+            }
+        }
+
+        // تحميل الأحياء
+        async function loadNeighborhoods() {
+            try {
+                // في تطبيق حقيقي، سنقوم بجلب الأحياء من قاعدة البيانات
+                // ولكن هنا سنستخدم التخزين المحلي للتبسيط
+                const storedNeighborhoods = localStorage.getItem('ejarplus_neighborhoods');
+                
+                if (storedNeighborhoods) {
+                    neighborhoods = JSON.parse(storedNeighborhoods);
+                } else {
+                    // الأحياء الافتراضية
+                    neighborhoods = [
+                        { name: "حي النخيل", color: "#3b82f6", created_at: new Date().toISOString() },
+                        { name: "حي الربيع", color: "#10b981", created_at: new Date().toISOString() },
+                        { name: "حي العليا", color: "#8b5cf6", created_at: new Date().toISOString() },
+                        { name: "حي السلام", color: "#f59e0b", created_at: new Date().toISOString() },
+                        { name: "حي الفيصلية", color: "#ef4444", created_at: new Date().toISOString() },
+                        { name: "حي الورود", color: "#ec4899", created_at: new Date().toISOString() }
+                    ];
+                    await saveNeighborhoods();
+                }
+                
+                displayNeighborhoods();
+                
+            } catch (error) {
+                console.error('Error loading neighborhoods:', error);
+                showToast('حدث خطأ في تحميل الأحياء', 'error');
+            }
+        }
+
+        // حفظ الأحياء
+        async function saveNeighborhoods() {
+            try {
+                localStorage.setItem('ejarplus_neighborhoods', JSON.stringify(neighborhoods));
+            } catch (error) {
+                console.error('Error saving neighborhoods:', error);
+                throw error;
+            }
+        }
+
+        // عرض الأحياء
+        function displayNeighborhoods() {
+            const container = document.getElementById('neighborhoodsGrid');
+            container.innerHTML = '';
+            
+            if (neighborhoods.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center col-span-full">لا توجد أحياء مضافة بعد</p>';
+                return;
+            }
+            
+            neighborhoods.forEach((neighborhood, index) => {
+                const card = document.createElement('div');
+                card.className = 'neighborhood-card';
+                card.innerHTML = `
+                    <div class="neighborhood-icon" style="background-color: ${neighborhood.color}20; color: ${neighborhood.color}">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h4 class="font-bold">${neighborhood.name}</h4>
+                    <p class="text-sm text-gray-600 mt-2">${getNeighborhoodPropertiesCount(neighborhood.name)} عقار متوفر</p>
+                    <div class="mt-4 flex justify-center space-x-2">
+                        <button class="btn btn-danger btn-sm delete-neighborhood-btn" data-index="${index}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // إضافة مستمعي الأحداث لأزرار الحذف
+            document.querySelectorAll('.delete-neighborhood-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    openDeleteNeighborhoodModal(index);
+                });
+            });
+        }
+
+        // الحصول على عدد العقارات في الحي
+        function getNeighborhoodPropertiesCount(neighborhoodName) {
+            return allProperties.filter(property => property.area === neighborhoodName).length;
+        }
+
+        // إضافة حي جديد
+        async function addNeighborhood() {
+            const nameInput = document.getElementById('neighborhoodName');
+            const colorInput = document.getElementById('neighborhoodColor');
+            
+            const name = nameInput.value.trim();
+            const color = colorInput.value;
+            
+            if (!name) {
+                showToast('يرجى إدخال اسم الحي', 'error');
+                return;
+            }
+            
+            // التحقق من عدم تكرار اسم الحي
+            if (neighborhoods.some(n => n.name === name)) {
+                showToast('هذا الحي موجود بالفعل', 'error');
+                return;
+            }
+            
+            const newNeighborhood = {
+                name: name,
+                color: color,
+                created_at: new Date().toISOString()
+            };
+            
+            neighborhoods.push(newNeighborhood);
+            await saveNeighborhoods();
+            
+            showToast('تم إضافة الحي بنجاح', 'success');
+            nameInput.value = '';
+            colorInput.value = '#3b82f6';
+            
+            loadNeighborhoods();
+            updateNeighborhoodSuggestions(document.getElementById('neighborhoodSuggestions'), '');
+            updateNeighborhoodSuggestions(document.getElementById('editNeighborhoodSuggestions'), '');
+        }
+
+        // حذف حي
+        async function deleteNeighborhood() {
+            if (neighborhoodToDelete === null) return;
+            
+            try {
+                neighborhoods.splice(neighborhoodToDelete, 1);
+                await saveNeighborhoods();
+                
+                showToast('تم حذف الحي بنجاح', 'success');
+                closeDeleteNeighborhoodModal();
+                loadNeighborhoods();
+                
+            } catch (error) {
+                console.error('Error deleting neighborhood:', error);
+                showToast('حدث خطأ في حذف الحي', 'error');
             }
         }
 
@@ -952,6 +1398,9 @@
                     loadProperties();
                 }
                 
+                // إضافة الحي إلى قائمة الأحياء إذا كان جديدًا
+                await addNeighborhoodIfNew(propertyData.area);
+                
             } catch (error) {
                 console.error('Error updating property:', error);
                 showToast('حدث خطأ في تحديث العقار: ' + error.message, 'error');
@@ -1005,6 +1454,24 @@
                 deleteBtn.innerHTML = 'حذف العقار';
                 propertyToDelete = null;
             }
+        }
+
+        // فتح نافذة حذف الحي
+        function openDeleteNeighborhoodModal(index) {
+            neighborhoodToDelete = index;
+            document.getElementById('deleteNeighborhoodModal').style.display = 'flex';
+        }
+
+        // إغلاق نافذة حذف الحي
+        function closeDeleteNeighborhoodModal() {
+            neighborhoodToDelete = null;
+            document.getElementById('deleteNeighborhoodModal').style.display = 'none';
+        }
+
+        // الحصول على لون عشوائي
+        function getRandomColor() {
+            const colors = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
+            return colors[Math.floor(Math.random() * colors.length)];
         }
 
         // عرض الإشعارات
